@@ -6,15 +6,16 @@
 
 ## วิธีทำงาน
 1. อ่าน README, Phase 1 spec, character manifest และดูรูปใน `design-reference/`
-2. ตรวจ assets 6 ตัวใน `public/assets/characters/`
-3. จัดการ scaffold, dependency, config, folder และไฟล์ทั้งหมดเอง
-4. ห้ามให้ผู้ใช้ต้องสร้างหรือย้ายไฟล์ด้วยมือ
-5. สร้าง branch ชื่อ `codex/phase-1-ui-prototype`
-6. ทำงาน Phase 1 เท่านั้น
-7. ใช้ mock data แยกจาก UI components เพื่อพร้อมเปลี่ยนเป็น D1 ภายหลัง
-8. ห้ามใช้ design reference เป็น full-page background
-9. ห้าม regenerate ตัวละคร
-10. ห้ามใส่ secret, token หรือ credential ลง repository
+2. อ่าน `asset-source/README.md` และแตก `asset-source/law-ascension-assets-webp.zip` ลง repository root ก่อนเริ่มทำ UI
+3. ตรวจ assets 6 ตัวใน `public/assets/characters/`
+4. จัดการ scaffold, dependency, config, folder และไฟล์ทั้งหมดเอง
+5. ห้ามให้ผู้ใช้ต้องสร้างหรือย้ายไฟล์ด้วยมือ
+6. ใช้ branch `codex/phase-1-ui-prototype` ที่มีอยู่แล้ว หากไม่มีจึงค่อยสร้าง
+7. ทำงาน Phase 1 เท่านั้น
+8. ใช้ mock data แยกจาก UI components เพื่อพร้อมเปลี่ยนเป็น D1 ภายหลัง
+9. ห้ามใช้ design reference เป็น full-page background
+10. ห้าม regenerate ตัวละคร
+11. ห้ามใส่ secret, token หรือ credential ลง repository
 
 ## Tech
 - React
