@@ -11,7 +11,7 @@
 | npm run check:assets | ผ่าน: 6 characters + 2 design references |
 | npm run typecheck | ผ่าน |
 | npm run lint | ผ่าน |
-| npm test | ผ่าน 2 tests: ทุกขอบเขต Level และ XP ข้ามระดับ |
+| npm test | ผ่าน 5 tests: Level/XP, เลือกชุด, manual selection และ equipment state |
 | npm run build | ผ่านทั้ง Workers และ client bundles |
 | npm run test:e2e บน Vite dev | ผ่าน 2 tests |
 | npm run test:e2e บน local Workers build preview | ผ่าน 2 tests |
@@ -25,14 +25,15 @@
 - Mobile: ตัวละครอยู่ก่อนรายวิชา, วิวัฒนาการเป็น horizontal scroll ภายใน panel
 - ปฏิเสธเวลา 0 นาที, เพิ่มวิแพ่ง 240 นาทีแล้วเป็น Lv.20 / 50 XP และภาพชุดกากี
 - ภารกิจรายวิชาและอ่านรวมสำเร็จ, ประวัติมีรายการถูกต้อง
-- กดตัวละครที่ยังไม่ปลดล็อกและไอเทมเพื่อดูรายละเอียด, ปิด dialog ด้วย Escape
+- เลือกชุดสูทย้อนหลังที่ Lv.20, เพิ่มเป็น Lv.21 แล้วยังคงชุดสูท และเปิดโหมดอัตโนมัติเพื่อกลับชุดกากี
+- ชุดที่ล็อกเลือกไม่ได้; ไอเทมสวม/ถอดแล้วอัปเดตทั้ง slot และกระเป๋า
 - จับเวลา 65 วินาที → พัก 30 วินาทีโดยเวลาอ่านไม่เพิ่ม → อ่านต่อ 60 วินาที → บันทึก 2 นาที / 20 XP
 - รีเฟรชคืนค่า mock เริ่มต้น
-- Mobile touch: เพิ่มแพ่ง 30 นาที, Level รายวิชาเพิ่ม, ภารกิจสำเร็จ, เลื่อนวิวัฒนาการและกดดูชุดปกติขาว
+- Mobile touch: เพิ่มแพ่ง 30 นาที, Level รายวิชาเพิ่ม, เลือกกลับไปใช้เสื้อยืด และสวม/ถอดปากกา
 
 ## Visual review
 
-ตรวจ screenshot Desktop และ Mobile ด้วยสายตา: ใช้ตัวละครจากชุดที่ผู้ใช้แนบเท่านั้น มีพื้นที่ตัวละครกลางหน้าพร้อมฉากหน้าต่างที่ประกอบด้วย CSS, วิชาอยู่ซ้ายและภารกิจอยู่ขวาบน desktop; mobile เรียงใหม่และใช้เมนูล่าง ปุ่มเริ่มอ่านมองเห็นได้ใน viewport 390×844
+ตรวจ screenshot Desktop และ Mobile ด้วยสายตา: ใช้ตัวละครจากชุดที่ผู้ใช้แนบเท่านั้น มีฉากห้องอ่านหนังสือ SVG แยกชั้น background/foreground, ชุดไอคอนวิชาที่วาดในระบบเดียวกัน, วิชาอยู่ซ้ายและภารกิจอยู่ขวาบน desktop; mobile เรียงใหม่ ใช้เมนูล่าง และเห็นตัวละคร อุปกรณ์กับปุ่มเริ่มอ่านครบใน viewport 390×844
 
 - [Desktop](screenshots/desktop.png)
 - [Mobile full page](screenshots/mobile.png)
@@ -42,6 +43,6 @@ Screenshots บันทึกจาก local Workers preview ของ build �
 
 ## ขอบเขตของผลตรวจ
 
-ทดสอบ Chrome desktop และ mobile emulation; ไม่ได้ตรวจบนอุปกรณ์ iOS/Android จริงหรือ Safari ข้อมูลอยู่ในหน่วยความจำและรีเซ็ตเมื่อ refresh; streak และภารกิจเป็น mock สำหรับทดลองในหน้าเดียว ไอเทมเป็น placeholder ไม่มีโบนัสหรือสวมใส่
+ทดสอบ Chrome desktop และ mobile emulation; ไม่ได้ตรวจบนอุปกรณ์ iOS/Android จริงหรือ Safari ข้อมูล ชุดที่เลือก และไอเทมที่สวมอยู่ในหน่วยความจำและรีเซ็ตเมื่อ refresh; streak และภารกิจเป็น mock สำหรับทดลองในหน้าเดียว ไอเทมไม่มีโบนัส
 
 ไม่ได้ทำ D1, Login/Auth, PIN, R2, production deploy หรือ Phase 2 รอผู้ใช้ตรวจ UI ก่อนเริ่มงานระยะถัดไป

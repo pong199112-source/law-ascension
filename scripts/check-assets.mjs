@@ -11,6 +11,8 @@ const expected = [
   ...manifest.stages.map((stage) => `public${stage.file}`),
   "design-reference/dashboard-reference.webp",
   "design-reference/dashboard-reference-alt.webp",
+  "public/assets/environment/study-room.svg",
+  "public/assets/environment/foreground-leaves.svg",
 ];
 const missing = [];
 for (const file of expected) {
@@ -25,6 +27,6 @@ if (missing.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    "All six character assets and both design references are present.",
+    "All six character assets, two design references, and environment layers are present.",
   );
 }

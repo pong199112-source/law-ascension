@@ -46,17 +46,17 @@ npm run dev
 - “เพิ่มเวลาเอง” รับจำนวนเต็ม 1–720 นาที เลือกวิชาได้ อัปเดตเวลาสะสม, XP, Level, ภารกิจ และประวัติทันที
 - สูตรทดลอง: 1 นาที = 10 XP; 1,000 XP = 1 Level ทั้ง overall และรายวิชา ไม่มี quest bonus
 - ทดลองเพิ่มวิแพ่ง 240 นาที: overall เปลี่ยนจาก Lv.17 เป็น Lv.20 / 50 XP และเปลี่ยนภาพเป็นชุดกากีอัตโนมัติ
-- กดแต่ละขั้นวิวัฒนาการเพื่อดูรายละเอียดและเงื่อนไขปลดล็อก ภาพหลักเปลี่ยนตาม Level จริงเท่านั้น
-- ไอเทม 6 ชิ้นเป็น placeholder กดดูรายละเอียดได้ ยังไม่มีโบนัสหรือระบบสวมใส่
+- กดชุดที่ปลดล็อกแล้วเพื่อย้อนกลับไปใช้ชุดเดิมได้ การเลือกเองจะคงอยู่แม้ Level เพิ่ม และสลับกลับเป็นโหมดอัตโนมัติได้
+- ไอเทม 6 ชิ้นกดสวม/ถอดได้ มี slot และสถานะที่ตัวละครกับกระเป๋า ทั้งหมดยังเป็น mock state และไม่มีโบนัส
 - ทุกอย่างอยู่ใน React state; รีเฟรชแล้วกลับสู่ mock เริ่มต้น ไม่มีการบันทึกข้ามการเปิดหน้า
 - ชุดภารกิจและ streak เป็น mock สำหรับทดลองในหน้าเดียว ไม่ได้จำลองการข้ามวัน วันสอบแก้ได้ใน mock data และนับถอยหลังจากเวลาจริง
 
 ### ไฟล์หลัก
 
 - `src/App.tsx` — หน้า Home และการเชื่อม interaction
-- `src/components/` — Progress และ native dialog ที่รองรับ keyboard/focus
+- `src/components/` — HUD icons, ตู้เสื้อผ้า, equipment slots, Progress และ native dialog
 - `src/data/mock.ts` — player, วิชา, ภารกิจ และไอเทม
-- `src/domain/progression.ts` — อ่าน character stage จาก manifest และคำนวณ XP
+- `src/domain/progression.ts`, `src/domain/customization.ts` — Level/XP, การเลือกชุด และ equip state
 - `src/style.css` — desktop/tablet/mobile layouts, animation และ reduced motion
 - `public/assets/characters/manifest.json` — source of truth ของ 6 ระดับ
 - `worker/index.ts`, `wrangler.jsonc`, `vite.config.ts` — Workers / static asset / Vite configuration
@@ -78,6 +78,6 @@ Browser test ใช้ Google Chrome ที่ติดตั้งในเค�
 
 ตรวจ build ที่เสิร์ฟผ่าน local Workers ด้วย `npm run preview` (ปกติ port 4173) แล้วกำหนด `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173` ก่อนรัน `npm run test:e2e`
 
-Asset ZIP ที่เสียถูกแทนด้วยฉบับสมบูรณ์จากผู้ใช้และแตกไฟล์แล้ว ภาพตัวละครไม่ถูกแก้ไขหรือสร้างใหม่ Reference อยู่ใน `design-reference/` เพื่ออ้างอิงการออกแบบเท่านั้น ไม่ถูกเสิร์ฟเป็นหน้าเว็บ ฟอนต์ Noto Sans Thai และ Nunito เสิร์ฟจาก dependency ภายในโปรเจกต์
+Asset ZIP ที่เสียถูกแทนด้วยฉบับสมบูรณ์จากผู้ใช้และแตกไฟล์แล้ว ภาพตัวละครไม่ถูกแก้ไขหรือสร้างใหม่ Reference อยู่ใน `design-reference/` เพื่ออ้างอิงการออกแบบเท่านั้น ไม่ถูกเสิร์ฟเป็นหน้าเว็บ ฉากห้องอ่านหนังสือและชุดไอคอนวาดเป็น SVG components แยกจาก character assets ฟอนต์ Noto Sans Thai และ Nunito เสิร์ฟจาก dependency ภายในโปรเจกต์
 
 **ขอบเขต:** จบที่ Phase 1 UI review เท่านั้น ยังไม่มี D1, Auth/Login, PIN, R2 หรือ production deploy

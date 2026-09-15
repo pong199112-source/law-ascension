@@ -34,12 +34,3 @@ export const mockQuests = [
   { subject: "court", target: 20, title: "อ่านระเบียบศาล 20 นาที" },
   { subject: null, target: 180, title: "อ่านรวมวันนี้ครบ 3 ชั่วโมง" },
 ];
-
-export const mockItems = [
-  "แว่น",
-  "ปากกา",
-  "กระเป๋า",
-  "นาฬิกา",
-  "Tablet",
-  "ID card",
-];

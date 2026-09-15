@@ -31,20 +31,18 @@ test("desktop and mobile: approved art, responsive layout, and real reading inte
           ),
       )
       .toBe(true);
-    const overflow = await page
-      .locator("body *")
-      .evaluateAll((elements) =>
-        elements
-          .filter(
-            (element) =>
-              element.getBoundingClientRect().right > window.innerWidth &&
-              !element.closest(".stages"),
-          )
-          .map((element) => ({
-            element: element.className,
-            right: element.getBoundingClientRect().right,
-          })),
-      );
+    const overflow = await page.locator("body *").evaluateAll((elements) =>
+      elements
+        .filter(
+          (element) =>
+            element.getBoundingClientRect().right > window.innerWidth &&
+            !element.closest(".stages"),
+        )
+        .map((element) => ({
+          element: element.className,
+          right: element.getBoundingClientRect().right,
+        })),
+    );
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -93,11 +91,43 @@ test("desktop and mobile: approved art, responsive layout, and real reading inte
   await page.getByRole("button", { name: "ชุดปกติขาว ยังไม่ปลดล็อก" }).click();
   await expect(page.getByRole("dialog")).toContainText("ปลดล็อกเมื่อถึง Lv.50");
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "👓 แว่น" }).click();
-  await expect(page.getByRole("dialog")).toContainText(
-    "ยังไม่มีโบนัสหรือระบบสวมใส่",
+  await page.getByRole("button", { name: "ชุดสูท ปลดล็อกแล้ว" }).click();
+  await page.getByRole("button", { name: "ใช้ชุดนี้", exact: true }).click();
+  await expect(page.locator(".main-character")).toHaveAttribute(
+    "src",
+    /character-lv10-19-suit.webp/,
   );
-  await page.keyboard.press("Escape");
+  await expect(page.locator(".wearing-outfit")).toContainText("เลือกเอง");
+  await page
+    .getByRole("button", { name: "สวมแว่น", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "ถอดแว่น", exact: true }),
+  ).toHaveCount(2);
+  await expect(page.locator(".items-panel")).toContainText("สวมอยู่ 1/6");
+  await page
+    .getByRole("button", { name: "ถอดแว่น", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("button", { name: "สวมแว่น", exact: true }),
+  ).toHaveCount(2);
+  await page.getByRole("button", { name: "＋ เพิ่มเวลาเอง" }).click();
+  await page.getByLabel("เวลาที่อ่าน (นาที)").fill("100");
+  await page.getByRole("button", { name: /บันทึกเวลาอ่าน/ }).click();
+  await expect(page.locator(".level-medal")).toContainText("21");
+  await expect(page.locator(".main-character")).toHaveAttribute(
+    "src",
+    /character-lv10-19-suit.webp/,
+  );
+  await page
+    .getByRole("button", { name: "อัตโนมัติ ปิด", exact: true })
+    .click();
+  await expect(page.locator(".main-character")).toHaveAttribute(
+    "src",
+    /character-lv20-29-khaki.webp/,
+  );
   await page.clock.install();
   await page.locator(".start-button").click();
   await page
@@ -108,7 +138,9 @@ test("desktop and mobile: approved art, responsive layout, and real reading inte
   await expect(page.locator(".timer-display")).toHaveText("01:05");
   await page.clock.fastForward(30000);
   await expect(page.locator(".timer-display")).toHaveText("01:05");
-  await page.getByRole("button", { name: "▶ อ่านต่อ", exact: true }).click();
+  await page
+    .getByRole("button", { name: "▶ อ่านต่อ", exact: true })
+    .click({ force: true });
   await page.clock.fastForward(60000);
   await page
     .getByRole("button", { name: "จบการอ่านและบันทึก 2 นาที", exact: true })
@@ -144,7 +176,7 @@ test.describe("mobile touch interactions", () => {
     ).toHaveAttribute("aria-valuenow", "150");
     await page
       .locator(".sidebar")
-      .getByRole("link", { name: "♧ ตัวละคร" })
+      .getByRole("link", { name: "ตัวละคร", exact: true })
       .tap();
     await page.locator(".stages").evaluate((element) => {
       element.scrollLeft = element.scrollWidth;
@@ -153,5 +185,23 @@ test.describe("mobile touch interactions", () => {
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByRole("button", { name: "ปิด", exact: true }).tap();
     await expect(page.getByRole("dialog")).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "เสื้อยืดธรรมดา ปลดล็อกแล้ว" })
+      .tap();
+    await page.getByRole("button", { name: "ใช้ชุดนี้", exact: true }).tap();
+    await expect(page.locator(".main-character")).toHaveAttribute(
+      "src",
+      /character-lv01-09-casual.webp/,
+    );
+    await page
+      .getByRole("button", { name: "สวมปากกา", exact: true })
+      .last()
+      .tap();
+    await expect(page.locator(".items-panel")).toContainText("สวมอยู่ 1/6");
+    await page
+      .getByRole("button", { name: "ถอดปากกา", exact: true })
+      .last()
+      .tap();
+    await expect(page.locator(".items-panel")).toContainText("สวมอยู่ 0/6");
   });
 });

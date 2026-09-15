@@ -11,7 +11,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "cf-typegen": "wrangler types",
     "check:assets": "node scripts/check-assets.mjs",
-    "test": "node --experimental-strip-types --test src/domain/progression.test.ts",
+    "test": "node --experimental-strip-types --test src/domain/*.test.ts",
     "test:e2e": "playwright test",
     "format": "prettier --write src tests scripts *.ts *.js *.json *.jsonc"
   },

@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
-import { mockPlayer, mockSubjects, mockQuests, mockItems } from "./data/mock";
+import { mockPlayer, mockSubjects, mockQuests } from "./data/mock";
+import { equipmentItems } from "./data/equipment";
+import type { EquipmentId, EquipmentState } from "./data/equipment";
+import { activeCharacter, toggleEquipment } from "./domain/customization";
+import { GameIcon } from "./components/GameIcon";
+import { CharacterCollection } from "./components/CharacterCollection";
+import { EquipmentPanel, EquippedSlots } from "./components/EquipmentPanel";
 import {
   addReadingXp,
   characterForLevel,
@@ -10,9 +16,7 @@ import { Progress } from "./components/Progress";
 import { Modal } from "./components/Modal";
 
 type Session = { id: number; subject: string; minutes: number; time: string };
-type Overlay = "manual" | "timer" | "history" | "item" | "stage" | null;
-const subjectIcons = ["⚖", "◆", "▤", "⌕", "▥"];
-const itemIcons = ["👓", "🖊️", "💼", "⌚", "📱", "🪪"];
+type Overlay = "manual" | "timer" | "history" | null;
 const stageNames = [
   "ก้าวแรก",
   "นักกฎหมายฝึกหัด",
@@ -34,8 +38,8 @@ export default function App() {
   const [subject, setSubject] = useState("civil-procedure");
   const [minutes, setMinutes] = useState("30");
   const [notice, setNotice] = useState("");
-  const [selectedItem, setSelectedItem] = useState(0);
-  const [selectedStage, setSelectedStage] = useState(1);
+  const [manualOutfit, setManualOutfit] = useState<string | null>(null);
+  const [equipped, setEquipped] = useState<EquipmentState>({});
   const [elapsed, setElapsed] = useState(0);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [storedSeconds, setStoredSeconds] = useState(0);
@@ -59,8 +63,22 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [notice]);
 
-  const stage = characterForLevel(player.level);
-  const currentStage = characterStages.indexOf(stage);
+  const stage = activeCharacter(player.level, manualOutfit);
+  const currentStage = characterStages.indexOf(characterForLevel(player.level));
+  function chooseOutfit(file: string | null) {
+    activeCharacter(player.level, file);
+    setManualOutfit(file);
+    setNotice(
+      file === null
+        ? "เปิดเลือกชุดอัตโนมัติตาม Level แล้ว"
+        : "เปลี่ยนชุดแล้ว · ชุดนี้จะอยู่กับคุณแม้ Level เพิ่ม",
+    );
+  }
+  function equipItem(id: EquipmentId) {
+    const item = equipmentItems.find((entry) => entry.id === id)!;
+    setNotice(`${equipped[item.slot] === id ? "ถอด" : "สวม"}${item.name}แล้ว`);
+    setEquipped((previous) => toggleEquipment(previous, id));
+  }
   const todayMinutes = sessions.reduce(
     (total, session) => total + session.minutes,
     0,
@@ -161,23 +179,29 @@ export default function App() {
           href="#home"
           aria-label="LAW ASCENSION หน้าหลัก"
         >
-          ⚖<span>LA</span>
+          <GameIcon name="civil" />
+          <span>LA</span>
         </a>
         <nav aria-label="เมนูหลัก">
           <a className="nav-item active" href="#home">
-            <span>⌂</span>หน้าหลัก
+            <GameIcon name="home" />
+            หน้าหลัก
           </a>
           <button className="nav-item" onClick={() => setOverlay("timer")}>
-            <span>▤</span>เริ่มอ่าน
+            <GameIcon name="book" />
+            เริ่มอ่าน
           </button>
           <a className="nav-item" href="#quests">
-            <span>☑</span>ภารกิจ
+            <GameIcon name="quest" />
+            ภารกิจ
           </a>
           <a className="nav-item" href="#evolution">
-            <span>♧</span>ตัวละคร
+            <GameIcon name="wardrobe" />
+            ตัวละคร
           </a>
           <button className="nav-item" onClick={() => setOverlay("history")}>
-            <span>◷</span>ประวัติ
+            <GameIcon name="history" />
+            ประวัติ
           </button>
         </nav>
         <div className="sidebar-bottom">
@@ -215,287 +239,256 @@ export default function App() {
           </div>
           <span className="date-pill">✦ ทุกนาทีมีความหมาย</span>
         </section>
-        <section className="stats" aria-label="ภาพรวมการอ่าน">
-          <article className="stat level-stat">
-            <div className="level-medal">
-              {player.level}
-              <small>LEVEL</small>
-            </div>
-            <div className="level-info">
-              <div className="stat-top">
-                <strong>Overall Level</strong>
-                <span>Lv.{player.level + 1} ↗</span>
+        <div className="game-room">
+          <div className="room-backdrop" aria-hidden="true" />
+          <div className="room-foreground" aria-hidden="true" />
+          <div className="room-location">
+            <span className="location-dot" /> ห้องอ่านหนังสือ ·
+            แสงเช้าแห่งความฝัน <span>✦</span>
+          </div>
+          <section className="stats" aria-label="ภาพรวมการอ่าน">
+            <article className="stat level-stat">
+              <div className="level-medal">
+                {player.level}
+                <small>LEVEL</small>
               </div>
-              <Progress value={player.xp} label="Overall XP" />
-              <small>
-                {player.xp.toLocaleString()} / 1,000 XP{" "}
-                <span>อีก {1000 - player.xp} XP เติบโตอีกขั้น!</span>
-              </small>
-            </div>
-          </article>
-          <article className="stat">
-            <span className="stat-icon gold">♕</span>
-            <div>
-              <small>ชั่วโมงอ่านสะสม</small>
-              <strong>
-                {Math.floor(player.totalMinutes / 60)} <em>ชม.</em>{" "}
-                {player.totalMinutes % 60} <em>นาที</em>
-              </strong>
-            </div>
-          </article>
-          <article className="stat">
-            <span className="stat-icon coral">🔥</span>
-            <div>
-              <small>อ่านต่อเนื่อง</small>
-              <strong>
-                {player.streak} <em>วัน</em>
-                <span className="streak-dots">● ● ● ● ● ● ●</span>
-              </strong>
-            </div>
-          </article>
-          <article className="stat exam-stat">
-            <span className="stat-icon purple">▦</span>
-            <div>
-              <small>นับถอยหลังสู่วันสอบ</small>
-              <strong>
-                {countdown} <em>วัน</em>
-              </strong>
-              <small>
-                {new Date(player.examDate).toLocaleDateString("th-TH", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                  timeZone: "Asia/Bangkok",
-                })}{" "}
-                · ไปให้ถึงฝัน!
-              </small>
-            </div>
-          </article>
-        </section>
-        <div className="adventure-grid">
-          <section className="panel subjects-panel" id="subjects">
-            <div className="panel-heading">
-              <h2>📚 เส้นทางวิชาของฉัน</h2>
-              <span className="tiny-label">5 วิชา</span>
-            </div>
-            <p className="panel-subtitle">สะสมความรู้ ทีละบท ทีละก้าว</p>
-            <div className="subject-list">
-              {subjects.map((entry, index) => (
-                <button
-                  key={entry.id}
-                  className="subject-card"
-                  style={{ "--accent": entry.color } as CSSProperties}
-                  onClick={() => {
-                    if (startedAt === null && storedSeconds === 0)
-                      setSubject(entry.id);
-                    setOverlay("timer");
-                  }}
-                >
-                  <span className="subject-icon">{subjectIcons[index]}</span>
-                  <div>
-                    <div className="subject-title">
-                      <strong>{entry.name}</strong>
-                      <span>Lv. {entry.level}</span>
-                    </div>
-                    <Progress value={entry.xp} label={`${entry.name} XP`} />
-                    <small>{entry.xp} / 1,000 XP</small>
-                  </div>
-                  <span className="subject-arrow">›</span>
-                </button>
-              ))}
-            </div>
-            <div className="study-tip">
-              <span>✧</span>
-              <p>
-                ไม่ต้องเก่งที่สุดในวันนี้
-                <br />
-                <strong>แค่เก่งกว่าเมื่อวานก็พอ</strong>
-              </p>
-            </div>
+              <div className="level-info">
+                <div className="stat-top">
+                  <strong>Overall Level</strong>
+                  <span>Lv.{player.level + 1} ↗</span>
+                </div>
+                <Progress value={player.xp} label="Overall XP" />
+                <small>
+                  {player.xp.toLocaleString()} / 1,000 XP{" "}
+                  <span>อีก {1000 - player.xp} XP เติบโตอีกขั้น!</span>
+                </small>
+              </div>
+            </article>
+            <article className="stat">
+              <span className="stat-icon gold">
+                <GameIcon name="crown" />
+              </span>
+              <div>
+                <small>ชั่วโมงอ่านสะสม</small>
+                <strong>
+                  {Math.floor(player.totalMinutes / 60)} <em>ชม.</em>{" "}
+                  {player.totalMinutes % 60} <em>นาที</em>
+                </strong>
+              </div>
+            </article>
+            <article className="stat">
+              <span className="stat-icon coral">
+                <GameIcon name="flame" />
+              </span>
+              <div>
+                <small>อ่านต่อเนื่อง</small>
+                <strong>
+                  {player.streak} <em>วัน</em>
+                  <span className="streak-dots">● ● ● ● ● ● ●</span>
+                </strong>
+              </div>
+            </article>
+            <article className="stat exam-stat">
+              <span className="stat-icon purple">
+                <GameIcon name="calendar" />
+              </span>
+              <div>
+                <small>นับถอยหลังสู่วันสอบ</small>
+                <strong>
+                  {countdown} <em>วัน</em>
+                </strong>
+                <small>
+                  {new Date(player.examDate).toLocaleDateString("th-TH", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    timeZone: "Asia/Bangkok",
+                  })}{" "}
+                  · ไปให้ถึงฝัน!
+                </small>
+              </div>
+            </article>
           </section>
-          <section className="character-panel" aria-label="ตัวละครของฉัน">
-            <div className="chapter-tag">
-              <span>✦</span> บทที่ {currentStage + 1} ·{" "}
-              {stageNames[currentStage]}
-            </div>
-            <div className="character-scene">
-              <div className="scene-window">
-                <span />
-                <span />
-                <span />
-                <span />
+          <div className="adventure-grid">
+            <section className="panel subjects-panel" id="subjects">
+              <div className="panel-heading">
+                <h2>
+                  <GameIcon name="book" /> เส้นทางวิชาของฉัน
+                </h2>
+                <span className="tiny-label">5 วิชา</span>
               </div>
-              <div className="scene-orbit" />
-              <div className="scene-spark spark-one">✦</div>
-              <div className="scene-spark spark-two">✧</div>
-              <div className="scene-spark spark-three">✦</div>
-              <div className="speech">
-                อีกนิดเดียว
-                <br />
-                ก็ใกล้ความฝันแล้ว ♡
-              </div>
-              <div className="scene-plant" aria-hidden="true">
-                🌿
-              </div>
-              <div className="scene-books" aria-hidden="true">
-                <span>LAW</span>
-                <span>one page at a time</span>
-                <span>✦</span>
-              </div>
-              <div className="character-shadow" />
-              <img
-                className="main-character"
-                src={stage.file}
-                alt={`ตัวละครผู้หญิง Lv.${player.level} ${stage.label}`}
-                fetchPriority="high"
-              />
-              <span className="character-level">✦ Lv. {player.level}</span>
-            </div>
-            <div className="character-caption">
-              <h2>{stageNames[currentStage]}</h2>
-              <p>อ่านวันนี้ เพื่อเป็นตัวเองในเวอร์ชันที่ดีกว่า</p>
-            </div>
-            <button
-              className="primary start-button"
-              onClick={() => setOverlay("timer")}
-            >
-              <span>▶</span>
-              {startedAt !== null
-                ? `กำลังอ่าน · ${formatSeconds(elapsed)}`
-                : "เริ่มอ่านวันนี้"}
-              <span>→</span>
-            </button>
-            <div className="secondary-actions">
-              <button
-                onClick={() => {
-                  if (startedAt !== null || storedSeconds > 0)
-                    setOverlay("timer");
-                  else setOverlay("manual");
-                }}
-              >
-                ＋ เพิ่มเวลาเอง
-              </button>
-              <span />
-              <button onClick={() => setOverlay("history")}>◷ ดูประวัติ</button>
-            </div>
-          </section>
-          <section className="panel quests-panel" id="quests">
-            <div className="panel-heading">
-              <h2>☑ ภารกิจวันนี้</h2>
-              <span className="quest-count">{completedQuests}/5</span>
-            </div>
-            <p className="panel-subtitle">
-              ภารกิจเล็ก ๆ สู่ความสำเร็จที่ยิ่งใหญ่
-            </p>
-            <div className="quest-list">
-              {mockQuests.map((quest) => {
-                const done = questMinutes(quest.subject);
-                const complete = done >= quest.target;
-                return (
-                  <div
-                    className={`quest ${complete ? "complete" : ""}`}
-                    key={quest.title}
+              <p className="panel-subtitle">สะสมความรู้ ทีละบท ทีละก้าว</p>
+              <div className="subject-list">
+                {subjects.map((entry) => (
+                  <button
+                    key={entry.id}
+                    className="subject-card"
+                    style={{ "--accent": entry.color } as CSSProperties}
+                    onClick={() => {
+                      if (startedAt === null && storedSeconds === 0)
+                        setSubject(entry.id);
+                      setOverlay("timer");
+                    }}
                   >
                     <span
-                      className="quest-check"
-                      aria-label={complete ? "สำเร็จแล้ว" : "ยังไม่สำเร็จ"}
+                      className="subject-icon"
+                      style={{ "--icon-color": entry.color } as CSSProperties}
                     >
-                      {complete ? "✓" : ""}
+                      <GameIcon name={entry.id} />
                     </span>
                     <div>
-                      <strong>{quest.title}</strong>
-                      {subjects.find(
-                        (entry) =>
-                          entry.id === quest.subject && entry.xp >= 800,
-                      ) && <span className="near-level">✦ ใกล้ Level Up</span>}
-                      <div className="quest-progress">
-                        <Progress
-                          value={done}
-                          max={quest.target}
-                          label={quest.title}
-                        />
-                        <small>
-                          {Math.min(done, quest.target)}/{quest.target}
-                        </small>
+                      <div className="subject-title">
+                        <strong>{entry.name}</strong>
+                        <span>Lv. {entry.level}</span>
+                      </div>
+                      <Progress value={entry.xp} label={`${entry.name} XP`} />
+                      <small>{entry.xp} / 1,000 XP</small>
+                    </div>
+                    <span className="subject-arrow">›</span>
+                  </button>
+                ))}
+              </div>
+              <div className="study-tip">
+                <span>✧</span>
+                <p>
+                  ไม่ต้องเก่งที่สุดในวันนี้
+                  <br />
+                  <strong>แค่เก่งกว่าเมื่อวานก็พอ</strong>
+                </p>
+              </div>
+            </section>
+            <section className="character-panel" aria-label="ตัวละครของฉัน">
+              <div className="chapter-tag">
+                <span>✦</span> บทที่ {currentStage + 1} ·{" "}
+                {stageNames[currentStage]}
+              </div>
+              <div className="character-scene">
+                <div className="scene-spark spark-one">✦</div>
+                <div className="scene-spark spark-two">✧</div>
+                <div className="scene-spark spark-three">✦</div>
+                <div className="speech">
+                  อีกนิดเดียว
+                  <br />
+                  ก็ใกล้ความฝันแล้ว ♡
+                </div>
+                <div className="character-shadow" />
+                <img
+                  className="main-character"
+                  src={stage.file}
+                  alt={`ตัวละครผู้หญิง Lv.${player.level} ${stage.label}`}
+                  fetchPriority="high"
+                />
+                <span className="character-level">✦ Lv. {player.level}</span>
+              </div>
+              <div className="character-caption">
+                <h2>{stageNames[currentStage]}</h2>
+                <p className="wearing-outfit">
+                  ใช้อยู่: {stage.label}{" "}
+                  <span>
+                    {manualOutfit === null ? "อัตโนมัติ" : "เลือกเอง"}
+                  </span>
+                </p>
+              </div>
+              <EquippedSlots equipped={equipped} onToggle={equipItem} />
+              <button
+                className="primary start-button"
+                onClick={() => setOverlay("timer")}
+              >
+                <span>▶</span>
+                {startedAt !== null
+                  ? `กำลังอ่าน · ${formatSeconds(elapsed)}`
+                  : "เริ่มอ่านวันนี้"}
+                <span>→</span>
+              </button>
+              <div className="secondary-actions">
+                <button
+                  onClick={() => {
+                    if (startedAt !== null || storedSeconds > 0)
+                      setOverlay("timer");
+                    else setOverlay("manual");
+                  }}
+                >
+                  ＋ เพิ่มเวลาเอง
+                </button>
+                <span />
+                <button onClick={() => setOverlay("history")}>
+                  ◷ ดูประวัติ
+                </button>
+              </div>
+            </section>
+            <section className="panel quests-panel" id="quests">
+              <div className="panel-heading">
+                <h2>
+                  <GameIcon name="quest" /> ภารกิจวันนี้
+                </h2>
+                <span className="quest-count">{completedQuests}/5</span>
+              </div>
+              <p className="panel-subtitle">
+                ภารกิจเล็ก ๆ สู่ความสำเร็จที่ยิ่งใหญ่
+              </p>
+              <div className="quest-list">
+                {mockQuests.map((quest) => {
+                  const done = questMinutes(quest.subject);
+                  const complete = done >= quest.target;
+                  return (
+                    <div
+                      className={`quest ${complete ? "complete" : ""}`}
+                      key={quest.title}
+                    >
+                      <span
+                        className="quest-check"
+                        aria-label={complete ? "สำเร็จแล้ว" : "ยังไม่สำเร็จ"}
+                      >
+                        {complete ? "✓" : ""}
+                      </span>
+                      <div>
+                        <strong>{quest.title}</strong>
+                        {subjects.find(
+                          (entry) =>
+                            entry.id === quest.subject && entry.xp >= 800,
+                        ) && (
+                          <span className="near-level">✦ ใกล้ Level Up</span>
+                        )}
+                        <div className="quest-progress">
+                          <Progress
+                            value={done}
+                            max={quest.target}
+                            label={quest.title}
+                          />
+                          <small>
+                            {Math.min(done, quest.target)}/{quest.target}
+                          </small>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="daily-reward">
-              <span>🎁</span>
-              <div>
-                <strong>วันนี้อ่านแล้ว {todayMinutes} นาที</strong>
-                <small>ทำครบ 5 ภารกิจ เก็บความภูมิใจอีกวัน</small>
+                  );
+                })}
               </div>
-              <span>✧</span>
-            </div>
-            <div className="encouragement">
-              “ ความพยายามเล็ก ๆ ในทุกวัน
-              <br />
-              <strong>สร้างอนาคตที่ยิ่งใหญ่ได้ ”</strong>
-              <span>KEEP GOING, FUTURE YOU IS PROUD.</span>
-            </div>
-          </section>
-        </div>
-        <div className="collection-grid">
-          <section className="panel evolution-panel" id="evolution">
-            <div className="panel-heading">
-              <h2>✦ การพัฒนาตัวละคร</h2>
-              <span className="tiny-label">เส้นทางสู่ความฝัน</span>
-            </div>
-            <div className="stages">
-              {characterStages.map((entry, index) => (
-                <button
-                  key={entry.file}
-                  className={`stage ${index === currentStage ? "current" : ""} ${index > currentStage ? "locked" : ""}`}
-                  onClick={() => {
-                    setSelectedStage(index);
-                    setOverlay("stage");
-                  }}
-                  aria-label={`${entry.label} ${index > currentStage ? "ยังไม่ปลดล็อก" : index === currentStage ? "ขั้นปัจจุบัน" : "ปลดล็อกแล้ว"}`}
-                >
-                  <span className="stage-status">
-                    {index === currentStage
-                      ? "อยู่ตรงนี้"
-                      : index > currentStage
-                        ? "🔒"
-                        : "✓"}
-                  </span>
-                  <img src={entry.file} alt={entry.label} loading="lazy" />
-                  <strong>
-                    Lv. {entry.minLevel}
-                    {entry.maxLevel ? `–${entry.maxLevel}` : "+"}
-                  </strong>
-                  <small>{entry.label}</small>
-                </button>
-              ))}
-            </div>
-          </section>
-          <section className="panel items-panel" id="items">
-            <div className="panel-heading">
-              <h2>🎒 ไอเทมที่ปลดล็อกแล้ว</h2>
-              <span className="tiny-label">6 ชิ้น</span>
-            </div>
-            <div className="items">
-              {mockItems.map((item, index) => (
-                <button
-                  key={item}
-                  onClick={() => {
-                    setSelectedItem(index);
-                    setOverlay("item");
-                  }}
-                >
-                  <span>{itemIcons[index]}</span>
-                  <small>{item}</small>
-                </button>
-              ))}
-            </div>
-            <p className="item-note">
-              ของชิ้นเล็ก ๆ สำหรับการเดินทางที่ยิ่งใหญ่ ♡
-            </p>
-          </section>
+              <div className="daily-reward">
+                <GameIcon name="gift" />
+                <div>
+                  <strong>วันนี้อ่านแล้ว {todayMinutes} นาที</strong>
+                  <small>ทำครบ 5 ภารกิจ เก็บความภูมิใจอีกวัน</small>
+                </div>
+                <span>✧</span>
+              </div>
+              <div className="encouragement">
+                “ ความพยายามเล็ก ๆ ในทุกวัน
+                <br />
+                <strong>สร้างอนาคตที่ยิ่งใหญ่ได้ ”</strong>
+                <span>KEEP GOING, FUTURE YOU IS PROUD.</span>
+              </div>
+            </section>
+          </div>
+          <div className="collection-grid">
+            <CharacterCollection
+              level={player.level}
+              activeFile={stage.file}
+              manualFile={manualOutfit}
+              onSelect={chooseOutfit}
+            />
+            <EquipmentPanel equipped={equipped} onToggle={equipItem} />
+          </div>
         </div>
         <footer>
           <span>
@@ -627,33 +620,6 @@ export default function App() {
               </ul>
             </>
           )}
-        </Modal>
-      )}
-      {overlay === "item" && (
-        <Modal title={mockItems[selectedItem]} onClose={close}>
-          <div className="empty-state">
-            <span>{itemIcons[selectedItem]}</span>
-            <h3>ไอเทมในคอลเลกชันของคุณ</h3>
-            <p>ปลดล็อกแล้ว · ไอเทมตัวอย่างใน Phase 1</p>
-            <p>ยังไม่มีโบนัสหรือระบบสวมใส่</p>
-          </div>
-        </Modal>
-      )}
-      {overlay === "stage" && (
-        <Modal title={stageNames[selectedStage]} onClose={close}>
-          <div className="stage-detail">
-            <img
-              src={characterStages[selectedStage].file}
-              alt={characterStages[selectedStage].label}
-            />
-            <h3>{characterStages[selectedStage].label}</h3>
-            <p>
-              {selectedStage <= currentStage
-                ? "✦ ปลดล็อกแล้ว"
-                : `🔒 ปลดล็อกเมื่อถึง Lv.${characterStages[selectedStage].minLevel}`}
-            </p>
-            <p>ตัวละครจะเปลี่ยนชุดให้อัตโนมัติเมื่อถึงระดับนี้</p>
-          </div>
         </Modal>
       )}
     </div>
