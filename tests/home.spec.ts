@@ -66,6 +66,31 @@ test("Home renders responsively and equipment appears on the supplied character"
   expect(errors).toEqual([]);
 });
 
+test("all six equipped items use tuned anchors or smart suppression on every pose", async ({ page }) => {
+  await page.goto("/");
+  for (const name of ["แว่น", "ปากกา", "กระเป๋า", "นาฬิกา", "Tablet", "ID card"])
+    await page.getByRole("button", { name: `สวม${name}`, exact: true }).last().click();
+  await expect(page.locator(".items-panel")).toContainText("สวมอยู่ 6/6");
+  await expect(page.getByRole("button", { name: "ถอดกระเป๋า", exact: true })).toHaveCount(2);
+  await expect(page.locator(".character-panel .accessory-layer")).toHaveAttribute("data-suppressed-equipment", /bag/);
+  await expect(page.locator('.character-panel [data-equipment-overlay="bag"]')).toHaveCount(0);
+
+  const stages = [
+    "เสื้อยืดธรรมดา ปลดล็อกแล้ว", "ชุดสูท ใช้อยู่",
+    "ชุดข้าราชการกากี ยังไม่ปลดล็อก", "ชุดข้าราชการกากี + อุปกรณ์ ยังไม่ปลดล็อก",
+    "ชุดข้าราชการกากีขั้นสูง ยังไม่ปลดล็อก", "ชุดปกติขาว ยังไม่ปลดล็อก",
+  ];
+  for (const [index, label] of stages.entries()) {
+    await page.getByRole("button", { name: label, exact: true }).click();
+    const layer = page.locator(".stage-detail .accessory-layer");
+    await expect(layer).toHaveAttribute("data-stage", String(index + 1));
+    expect(await layer.locator("[data-equipment-overlay]").count()).toBeLessThanOrEqual(5);
+    await expect(layer).not.toHaveAttribute("data-suppressed-equipment", "");
+    await page.locator(".stage-detail-character").screenshot({ path: `test-results/accessories-stage-${index + 1}.png` });
+    await page.getByRole("button", { name: "ปิด", exact: true }).click();
+  }
+});
+
 test("manual activity records real minutes, 85 percent XP, subject XP and question accuracy", async ({ page }) => {
   await page.goto("/");
   await addManual(page, "civil-procedure", "questions", 30, { attempted: 28, correct: 22 });

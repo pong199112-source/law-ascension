@@ -398,6 +398,7 @@ export default function App() {
               activeFile={stage.file}
               manualFile={manualOutfit}
               onSelect={chooseOutfit}
+              equipped={equipped}
             />
             <EquipmentPanel equipped={equipped} onToggle={equipItem} />
           </div>

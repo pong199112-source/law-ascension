@@ -2,17 +2,21 @@ import { useState } from "react";
 import { characterStages } from "../domain/progression";
 import { Modal } from "./Modal";
 import { GameIcon } from "./GameIcon";
+import { AccessoryLayer } from "./AccessoryLayer";
+import type { EquipmentState } from "../data/equipment";
 
 export function CharacterCollection({
   level,
   activeFile,
   manualFile,
   onSelect,
+  equipped,
 }: {
   level: number;
   activeFile: string;
   manualFile: string | null;
   onSelect: (file: string | null) => void;
+  equipped: EquipmentState;
 }) {
   const [inspectedFile, setInspectedFile] = useState<string | null>(null);
   const inspected = characterStages.find(
@@ -72,7 +76,10 @@ export function CharacterCollection({
       {inspected && (
         <Modal title={inspected.label} onClose={() => setInspectedFile(null)}>
           <div className="stage-detail">
-            <img src={inspected.file} alt={inspected.label} />
+            <div className="stage-detail-character">
+              <img src={inspected.file} alt={inspected.label} />
+              <AccessoryLayer equipped={equipped} stageFile={inspected.file} />
+            </div>
             <p>
               {inspected.minLevel > level
                 ? `ปลดล็อกเมื่อถึง Lv.${inspected.minLevel}`

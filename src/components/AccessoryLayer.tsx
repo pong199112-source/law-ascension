@@ -1,153 +1,90 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { EquipmentId, EquipmentState } from "../data/equipment";
 import { equipmentItems } from "../data/equipment";
+import { accessoryConfigForStage } from "../data/accessories";
 import { characterStages } from "../domain/progression";
-
-type Anchor = { left: number; top: number; width: number; rotation: number };
-type AnchorSet = Record<EquipmentId, Anchor>;
-
-// Each supplied character has a different pose. These coordinates are percentages
-// of the transparent character canvas, so layers stay attached at every render size.
-const accessoryAnchors: AnchorSet[] = [
-  {
-    glasses: { left: 50, top: 19, width: 25, rotation: -2 },
-    pen: { left: 43, top: 42, width: 8, rotation: -18 },
-    bag: { left: 72, top: 49, width: 29, rotation: -5 },
-    watch: { left: 68, top: 34, width: 10, rotation: -7 },
-    tablet: { left: 39, top: 43, width: 27, rotation: -6 },
-    "id-card": { left: 53, top: 35, width: 16, rotation: 2 },
-  },
-  {
-    glasses: { left: 49, top: 21, width: 25, rotation: -1 },
-    pen: { left: 36, top: 34, width: 8, rotation: 18 },
-    bag: { left: 73, top: 54, width: 27, rotation: 2 },
-    watch: { left: 65, top: 50, width: 9, rotation: 6 },
-    tablet: { left: 59, top: 47, width: 25, rotation: 8 },
-    "id-card": { left: 50, top: 38, width: 15, rotation: 0 },
-  },
-  {
-    glasses: { left: 49, top: 21, width: 24, rotation: -1 },
-    pen: { left: 73, top: 31, width: 8, rotation: -26 },
-    bag: { left: 73, top: 52, width: 26, rotation: 3 },
-    watch: { left: 71, top: 35, width: 9, rotation: -8 },
-    tablet: { left: 37, top: 45, width: 27, rotation: -9 },
-    "id-card": { left: 51, top: 37, width: 15, rotation: 0 },
-  },
-  {
-    glasses: { left: 49, top: 21, width: 24, rotation: -1 },
-    pen: { left: 68, top: 31, width: 8, rotation: -18 },
-    bag: { left: 71, top: 53, width: 25, rotation: 2 },
-    watch: { left: 68, top: 34, width: 9, rotation: -4 },
-    tablet: { left: 36, top: 45, width: 27, rotation: -8 },
-    "id-card": { left: 51, top: 37, width: 15, rotation: 0 },
-  },
-  {
-    glasses: { left: 49, top: 20, width: 24, rotation: -1 },
-    pen: { left: 68, top: 29, width: 8, rotation: -18 },
-    bag: { left: 73, top: 52, width: 25, rotation: 2 },
-    watch: { left: 68, top: 32, width: 9, rotation: -4 },
-    tablet: { left: 34, top: 43, width: 27, rotation: -8 },
-    "id-card": { left: 51, top: 35, width: 15, rotation: 0 },
-  },
-  {
-    glasses: { left: 43, top: 20, width: 24, rotation: -1 },
-    pen: { left: 74, top: 26, width: 8, rotation: -26 },
-    bag: { left: 73, top: 53, width: 25, rotation: 3 },
-    watch: { left: 76, top: 29, width: 9, rotation: 12 },
-    tablet: { left: 31, top: 43, width: 27, rotation: -8 },
-    "id-card": { left: 47, top: 35, width: 15, rotation: 0 },
-  },
-];
 
 const drawings: Record<EquipmentId, ReactNode> = {
   glasses: (
     <>
-      <circle cx="28" cy="30" r="18" fill="#a98db832" />
-      <circle cx="72" cy="30" r="18" fill="#a98db832" />
-      <path d="M10 25q18-9 36 1m8 0q18-10 36-1M46 27q4-5 8 0" />
+      <ellipse cx="28" cy="50" rx="18" ry="15" fill="url(#lens)" />
+      <ellipse cx="72" cy="50" rx="18" ry="15" fill="url(#lens)" />
+      <path d="M9 47q18-8 38 1m6 0q20-9 38-1M46 49q4-5 8 0" />
+      <path d="m19 43 7-3m35 3 7-3" stroke="#fff9" strokeWidth="2" />
     </>
   ),
   pen: (
     <>
-      <path d="m47 7 15 15-40 67L8 94l4-15z" fill="#82afd0" />
-      <path d="m47 7 15 15-6 10-15-15z" fill="#f3c77e" />
-      <path d="m8 94 14-5-10-10z" fill="#5f514e" />
+      <path d="m47 6 14 14-39 69-13 5 4-14z" fill="url(#blue)" />
+      <path d="m47 6 14 14-6 10-14-14z" fill="#f2c678" />
+      <path d="m9 94 13-5-9-9z" fill="#554448" />
+      <path d="m23 76 28-49" stroke="#fff8" strokeWidth="2" />
     </>
   ),
   bag: (
     <>
-      <path d="M27 32V22q23-22 46 0v10" fill="none" />
-      <rect x="12" y="30" width="76" height="62" rx="13" fill="#b98178" />
-      <path d="M14 48q36 27 72 0" fill="none" />
-      <rect x="43" y="50" width="14" height="16" rx="3" fill="#f1ce79" />
+      <path d="M28 34V24q22-21 44 0v10" fill="none" />
+      <rect x="13" y="32" width="74" height="59" rx="13" fill="url(#rose)" />
+      <path d="M15 49q35 25 70 0" fill="none" />
+      <rect x="43" y="51" width="14" height="15" rx="3" fill="#edc879" />
+      <path d="M21 39h58" stroke="#fff5" strokeWidth="2" />
     </>
   ),
   watch: (
     <>
-      <path d="M38 2h24l7 31-7 65H38l-7-65z" fill="#c58b79" />
-      <circle cx="50" cy="49" r="27" fill="#efc96f" />
-      <circle cx="50" cy="49" r="20" fill="#fff8dd" />
-      <path d="M50 35v15l10 7" />
+      <path d="M39 3h22l6 31-6 63H39l-6-63z" fill="#bc8878" />
+      <circle cx="50" cy="49" r="25" fill="url(#gold)" />
+      <circle cx="50" cy="49" r="18" fill="#fff7dc" />
+      <path d="M50 36v14l10 6" />
+      <path d="M42 30h16" stroke="#fff7" strokeWidth="2" />
     </>
   ),
   tablet: (
     <>
-      <rect x="12" y="3" width="76" height="94" rx="10" fill="#728d8b" />
-      <rect x="19" y="12" width="62" height="72" rx="5" fill="#e4f0e9" />
-      <path d="m27 32 23-12m-23 28 45-24" stroke="#fff" />
-      <circle cx="50" cy="90" r="3" fill="#fff4dc" stroke="none" />
+      <rect x="15" y="4" width="70" height="92" rx="9" fill="url(#device)" />
+      <rect x="21" y="11" width="58" height="72" rx="4" fill="#dceae7" />
+      <path d="m29 31 21-11m-21 28 41-23" stroke="#fff9" strokeWidth="3" />
+      <circle cx="50" cy="89" r="2.5" fill="#fff1d6" stroke="none" />
     </>
   ),
   "id-card": (
     <>
-      <path d="M28 2 50 32 72 2" fill="none" stroke="#d492a4" strokeWidth="9" />
-      <rect x="12" y="27" width="76" height="69" rx="10" fill="#fff7e7" />
-      <circle cx="38" cy="51" r="11" fill="#dfa5ad" />
-      <path d="M24 78q14-22 28 0m10-28h17m-17 13h17" />
+      <path d="M31 3 50 31 69 3" fill="none" stroke="#c9859a" strokeWidth="7" />
+      <rect x="15" y="28" width="70" height="66" rx="9" fill="url(#paper)" />
+      <circle cx="38" cy="52" r="10" fill="#dda0a8" />
+      <path d="M25 78q13-21 26 0m11-27h15m-15 12h15" />
+      <path d="M22 35h56" stroke="#fff" strokeWidth="2" />
     </>
   ),
 };
 
-export function AccessoryLayer({
-  equipped,
-  stageFile,
-}: {
-  equipped: EquipmentState;
-  stageFile: string;
-}) {
-  const stageIndex = Math.max(
-    0,
-    characterStages.findIndex((stage) => stage.file === stageFile),
-  );
-  const anchors = accessoryAnchors[stageIndex];
+export function AccessoryLayer({ equipped, stageFile }: { equipped: EquipmentState; stageFile: string }) {
+  const stageIndex = Math.max(0, characterStages.findIndex((stage) => stage.file === stageFile));
+  const config = accessoryConfigForStage(stageIndex);
+  const suppressed = equipmentItems
+    .filter((item) => equipped[item.slot] === item.id && config.anchors[item.id].suppressed)
+    .map((item) => item.id);
   return (
-    <div className="accessory-layer" data-stage={stageIndex + 1} aria-hidden="true">
+    <div className="accessory-layer" data-stage={stageIndex + 1} data-suppressed-equipment={suppressed.join(",")} aria-hidden="true">
       {equipmentItems.map((item) => {
         if (equipped[item.slot] !== item.id) return null;
-        const anchor = anchors[item.id];
+        const anchor = config.anchors[item.id];
+        if (anchor.suppressed) return null;
         const style = {
-          "--accessory-left": `${anchor.left}%`,
-          "--accessory-top": `${anchor.top}%`,
-          "--accessory-width": `${anchor.width}%`,
-          "--accessory-rotation": `${anchor.rotation}deg`,
+          "--accessory-left": `${anchor.left}%`, "--accessory-top": `${anchor.top}%`,
+          "--accessory-width": `${anchor.width}%`, "--accessory-rotation": `${anchor.rotation}deg`,
         } as CSSProperties;
         return (
-          <svg
-            key={item.id}
-            className={`accessory accessory-${item.id}`}
-            data-equipment-overlay={item.id}
-            style={style}
-            viewBox="0 0 100 100"
-          >
-            <g
-              fill="none"
-              stroke="#654f4b"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              {drawings[item.id]}
-            </g>
+          <svg key={item.id} className={`accessory accessory-${item.id}`} data-equipment-overlay={item.id} data-stage-anchor={`${stageIndex + 1}-${item.id}`} style={style} viewBox="0 0 100 100">
+            <defs>
+              <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#d8c9e9" stopOpacity=".46" /><stop offset="1" stopColor="#a98db8" stopOpacity=".2" /></linearGradient>
+              <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#9fc9e5" /><stop offset="1" stopColor="#688eae" /></linearGradient>
+              <linearGradient id="rose" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#d5a096" /><stop offset="1" stopColor="#9e6c69" /></linearGradient>
+              <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#f7dc9b" /><stop offset="1" stopColor="#c6944f" /></linearGradient>
+              <linearGradient id="device" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#819d9c" /><stop offset="1" stopColor="#506c70" /></linearGradient>
+              <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#fffdf1" /><stop offset="1" stopColor="#f1dfc8" /></linearGradient>
+            </defs>
+            <g fill="none" stroke="#4e3c42" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">{drawings[item.id]}</g>
           </svg>
         );
       })}

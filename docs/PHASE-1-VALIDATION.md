@@ -9,8 +9,8 @@
 | npm run check:assets | ผ่าน: character ต้นฉบับ 6 ภาพ, design references 2 ภาพ และ environment 2 layers |
 | npm run typecheck | ผ่าน |
 | npm run lint | ผ่าน ไม่มี error/warning |
-| npm test | ผ่าน 10 tests |
-| npm run test:e2e | ผ่าน 6 tests บน production preview |
+| npm test | ผ่าน 12 tests |
+| npm run test:e2e | ผ่าน 7 tests บน production preview |
 | npm run build | ผ่านทั้ง Workers และ client bundles |
 | console / page / HTTP errors | ไม่พบใน browser test |
 | git diff --check | ผ่าน |
@@ -29,6 +29,8 @@
 ## Browser tests และ visual review
 
 - Layered accessories แสดง/หายทันทีเมื่อ equip/unequip และสถานะตรงกันใน slot กับ inventory
+- Anchor ทุกชิ้นกำหนด x/y/scale/rotation แยกครบ 6 stages; เปิด preview loadout ของ stage ที่ยังล็อกได้จากตู้เสื้อผ้า
+- Equip 6/6 ทุก stage ยังรักษา silhouette ด้วย smart suppression สำหรับ bag/tablet/ID/pen/watch ที่ซ้ำกับ base art หรือไม่มีจุดยึดตาม pose
 - เปลี่ยนจากชุดสูทเป็นเสื้อยืดแล้ว accessory ยังคงอยู่และเปลี่ยนไปใช้ anchor ของ stage ใหม่
 - ตรวจ responsive ที่ 1440, 1024, 768, 390 และ 320px โดยไม่มี horizontal overflow
 - Mobile reflow วางตัวละครก่อน Subject panel และเมนูเป็น bottom navigation
