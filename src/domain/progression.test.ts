@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { characterForLevel, addReadingXp } from "./progression.ts";
+import { characterForLevel } from "./progression.ts";
 
 test("all stage boundaries and uncapped final stage use the approved manifest", () => {
   for (const [level, name] of [
@@ -22,17 +22,5 @@ test("all stage boundaries and uncapped final stage use the approved manifest", 
   }
   for (const level of [0, -1, 1.5, NaN, Infinity]) {
     assert.throws(() => characterForLevel(level), RangeError);
-  }
-});
-
-test("reading XP can cross several levels and keeps remaining XP", () => {
-  assert.deepEqual(addReadingXp(17, 650, 240), { level: 20, xp: 50 });
-  assert.ok(
-    characterForLevel(addReadingXp(17, 650, 240).level).file.endsWith(
-      "-khaki.webp",
-    ),
-  );
-  for (const minutes of [0, -1, 1.5, 721, NaN]) {
-    assert.throws(() => addReadingXp(17, 650, minutes), RangeError);
   }
 });

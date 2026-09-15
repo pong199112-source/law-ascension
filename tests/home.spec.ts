@@ -1,207 +1,142 @@
-import { test, expect } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-test("desktop and mobile: approved art, responsive layout, and real reading interactions", async ({
-  page,
-}) => {
+async function expectNoOverflow(page: Page, width: number, height: number) {
+  await page.setViewportSize({ width, height });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+}
+
+async function addManual(
+  page: Page,
+  subject: string,
+  activity: string,
+  minutes: number,
+  results?: { attempted: number; correct: number },
+) {
+  await page.getByRole("button", { name: "＋ เพิ่มเวลาเอง" }).click();
+  await page.getByLabel("เลือกวิชา").selectOption(subject);
+  await page.getByLabel("เลือกรูปแบบการเรียน").selectOption(activity);
+  await page.getByLabel("เวลาที่เรียน (นาที)").fill(String(minutes));
+  if (results) {
+    await page.getByLabel("จำนวนข้อที่ทำ").fill(String(results.attempted));
+    await page.getByLabel("จำนวนข้อที่ตอบถูก").fill(String(results.correct));
+  }
+  await page.getByRole("button", { name: /บันทึกเวลา ·/ }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+}
+
+test("Home renders responsively and equipment appears on the supplied character", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error")
-      errors.push(`${message.text()} ${message.location().url}`);
-  });
-  page.on("response", (response) => {
-    if (response.status() >= 400)
-      errors.push(`${response.status()} ${response.url()}`);
-  });
-  for (const width of [1440, 1024, 768, 390, 320]) {
-    await page.setViewportSize({ width, height: width > 640 ? 1080 : 844 });
-    await page.goto("/");
-    await expect(page.locator(".main-character")).toHaveAttribute(
-      "src",
-      /character-lv10-19-suit.webp/,
-    );
-    await page.evaluate(() => document.fonts.ready);
-    await page.locator(".items").scrollIntoViewIfNeeded();
-    await expect
-      .poll(() =>
-        page
-          .locator("img")
-          .evaluateAll((images) =>
-            images.every((image) => image.complete && image.naturalWidth > 0),
-          ),
-      )
-      .toBe(true);
-    const overflow = await page.locator("body *").evaluateAll((elements) =>
-      elements
-        .filter(
-          (element) =>
-            element.getBoundingClientRect().right > window.innerWidth &&
-            !element.closest(".stages"),
-        )
-        .map((element) => ({
-          element: element.className,
-          right: element.getBoundingClientRect().right,
-        })),
-    );
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth,
-      ),
-      `No horizontal page overflow at ${width}px: ${JSON.stringify(overflow)}`,
-    ).toBe(true);
-    await page.evaluate(() => window.scrollTo(0, 0));
-    if (width === 1440 || width === 390)
-      await page.screenshot({
-        path: `docs/screenshots/${width === 1440 ? "desktop" : "mobile"}.png`,
-        fullPage: true,
-      });
-    if (width === 390)
-      await page.screenshot({ path: "docs/screenshots/mobile-viewport.png" });
+  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+  page.on("response", (response) => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
+  await page.goto("/");
+  await expect(page.locator(".main-character")).toHaveAttribute("src", /character-lv10-19-suit.webp/);
+  await expect(page.locator(".accessory-layer")).toHaveAttribute("data-stage", "2");
+
+  await page.getByRole("button", { name: "สวมแว่น", exact: true }).last().click();
+  await expect(page.locator('[data-equipment-overlay="glasses"]')).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "ถอดแว่น", exact: true })).toHaveCount(2);
+  const suitAnchor = await page.locator('[data-equipment-overlay="glasses"]').getAttribute("style");
+
+  await page.getByRole("button", { name: "เสื้อยืดธรรมดา ปลดล็อกแล้ว" }).click();
+  await page.getByRole("button", { name: "ใช้ชุดนี้", exact: true }).click();
+  await expect(page.locator(".accessory-layer")).toHaveAttribute("data-stage", "1");
+  await expect(page.locator('[data-equipment-overlay="glasses"]')).toHaveCount(1);
+  expect(await page.locator('[data-equipment-overlay="glasses"]').getAttribute("style")).not.toBe(suitAnchor);
+
+  await page.getByRole("button", { name: "ถอดแว่น", exact: true }).last().click();
+  await expect(page.locator('[data-equipment-overlay="glasses"]')).toHaveCount(0);
+  await page.getByRole("button", { name: "สวมแว่น", exact: true }).last().click();
+  await page.getByRole("button", { name: "สวมนาฬิกา", exact: true }).last().click();
+  await page.getByRole("button", { name: "สวมID card", exact: true }).last().click();
+  await page.getByRole("button", { name: "อัตโนมัติ ปิด", exact: true }).click();
+  await expect(page.locator(".accessory-layer")).toHaveAttribute("data-stage", "2");
+
+  for (const [width, height] of [[1440, 1080], [1024, 900], [768, 900], [390, 844], [320, 760]]) {
+    await expectNoOverflow(page, width, height);
+    if (width === 1440) await page.screenshot({ path: "docs/screenshots/desktop.png", fullPage: true });
     if (width === 390) {
       const hero = await page.locator(".character-panel").boundingBox();
       const subjects = await page.locator(".subjects-panel").boundingBox();
       expect(hero!.y).toBeLessThan(subjects!.y);
-      expect(
-        await page
-          .locator(".stages")
-          .evaluate((element) => element.scrollWidth > element.clientWidth),
-      ).toBe(true);
+      await page.screenshot({ path: "docs/screenshots/mobile.png", fullPage: true });
+      await page.screenshot({ path: "docs/screenshots/mobile-viewport.png" });
     }
   }
-  await page.setViewportSize({ width: 1440, height: 1080 });
-  await page.getByRole("button", { name: "＋ เพิ่มเวลาเอง" }).click();
-  await page.getByLabel("เวลาที่อ่าน (นาที)").fill("0");
-  await page.getByRole("button", { name: /บันทึกเวลาอ่าน/ }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await page.getByLabel("เวลาที่อ่าน (นาที)").fill("240");
-  await page.getByRole("button", { name: /บันทึกเวลาอ่าน/ }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.locator(".main-character")).toHaveAttribute(
-    "src",
-    /character-lv20-29-khaki.webp/,
-  );
-  await expect(
-    page.getByRole("progressbar", { name: "Overall XP", exact: true }),
-  ).toHaveAttribute("aria-valuenow", "50");
-  await expect(page.locator(".quest-count")).toHaveText("2/5");
-  await page.getByRole("button", { name: "◷ ดูประวัติ" }).click();
-  await expect(page.locator(".history-list li")).toHaveCount(1);
-  await expect(page.locator(".history-list")).toContainText("240 นาที");
-  await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "ชุดปกติขาว ยังไม่ปลดล็อก" }).click();
-  await expect(page.getByRole("dialog")).toContainText("ปลดล็อกเมื่อถึง Lv.50");
-  await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "ชุดสูท ปลดล็อกแล้ว" }).click();
-  await page.getByRole("button", { name: "ใช้ชุดนี้", exact: true }).click();
-  await expect(page.locator(".main-character")).toHaveAttribute(
-    "src",
-    /character-lv10-19-suit.webp/,
-  );
-  await expect(page.locator(".wearing-outfit")).toContainText("เลือกเอง");
-  await page
-    .getByRole("button", { name: "สวมแว่น", exact: true })
-    .first()
-    .click();
-  await expect(
-    page.getByRole("button", { name: "ถอดแว่น", exact: true }),
-  ).toHaveCount(2);
-  await expect(page.locator(".items-panel")).toContainText("สวมอยู่ 1/6");
-  await page
-    .getByRole("button", { name: "ถอดแว่น", exact: true })
-    .first()
-    .click();
-  await expect(
-    page.getByRole("button", { name: "สวมแว่น", exact: true }),
-  ).toHaveCount(2);
-  await page.getByRole("button", { name: "＋ เพิ่มเวลาเอง" }).click();
-  await page.getByLabel("เวลาที่อ่าน (นาที)").fill("100");
-  await page.getByRole("button", { name: /บันทึกเวลาอ่าน/ }).click();
-  await expect(page.locator(".level-medal")).toContainText("21");
-  await expect(page.locator(".main-character")).toHaveAttribute(
-    "src",
-    /character-lv10-19-suit.webp/,
-  );
-  await page
-    .getByRole("button", { name: "อัตโนมัติ ปิด", exact: true })
-    .click();
-  await expect(page.locator(".main-character")).toHaveAttribute(
-    "src",
-    /character-lv20-29-khaki.webp/,
-  );
-  await page.clock.install();
-  await page.locator(".start-button").click();
-  await page
-    .getByRole("button", { name: "▶ เริ่มจับเวลา", exact: true })
-    .click();
-  await page.clock.fastForward(65000);
-  await page.getByRole("button", { name: "Ⅱ พักสักครู่", exact: true }).click();
-  await expect(page.locator(".timer-display")).toHaveText("01:05");
-  await page.clock.fastForward(30000);
-  await expect(page.locator(".timer-display")).toHaveText("01:05");
-  await page
-    .getByRole("button", { name: "▶ อ่านต่อ", exact: true })
-    .click({ force: true });
-  await page.clock.fastForward(60000);
-  await page
-    .getByRole("button", { name: "จบการอ่านและบันทึก 2 นาที", exact: true })
-    .click();
-  await expect(
-    page.getByRole("progressbar", { name: "Overall XP", exact: true }),
-  ).toHaveAttribute("aria-valuenow", "70");
-  await page.reload();
-  await expect(page.locator(".main-character")).toHaveAttribute(
-    "src",
-    /character-lv10-19-suit.webp/,
-  );
   expect(errors).toEqual([]);
 });
 
-test.describe("mobile touch interactions", () => {
-  test.use({
-    viewport: { width: 390, height: 844 },
-    isMobile: true,
-    hasTouch: true,
-  });
-  test("manual entry, completed quests, collection and modal keyboard dismissal", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: "＋ เพิ่มเวลาเอง" }).tap();
-    await page.getByLabel("วิชาที่อ่าน").selectOption("civil");
-    await page.getByRole("button", { name: "30 นาที", exact: true }).tap();
-    await page.getByRole("button", { name: /บันทึกเวลาอ่าน/ }).tap();
-    await expect(page.locator(".quest-count")).toHaveText("1/5");
-    await expect(
-      page.getByRole("progressbar", { name: "แพ่ง XP", exact: true }),
-    ).toHaveAttribute("aria-valuenow", "150");
-    await page
-      .locator(".sidebar")
-      .getByRole("link", { name: "ตัวละคร", exact: true })
-      .tap();
-    await page.locator(".stages").evaluate((element) => {
-      element.scrollLeft = element.scrollWidth;
-    });
-    await page.getByRole("button", { name: "ชุดปกติขาว ยังไม่ปลดล็อก" }).tap();
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await page.getByRole("button", { name: "ปิด", exact: true }).tap();
-    await expect(page.getByRole("dialog")).toHaveCount(0);
-    await page
-      .getByRole("button", { name: "เสื้อยืดธรรมดา ปลดล็อกแล้ว" })
-      .tap();
-    await page.getByRole("button", { name: "ใช้ชุดนี้", exact: true }).tap();
-    await expect(page.locator(".main-character")).toHaveAttribute(
-      "src",
-      /character-lv01-09-casual.webp/,
-    );
-    await page
-      .getByRole("button", { name: "สวมปากกา", exact: true })
-      .last()
-      .tap();
-    await expect(page.locator(".items-panel")).toContainText("สวมอยู่ 1/6");
-    await page
-      .getByRole("button", { name: "ถอดปากกา", exact: true })
-      .last()
-      .tap();
-    await expect(page.locator(".items-panel")).toContainText("สวมอยู่ 0/6");
-  });
+test("manual activity records real minutes, 85 percent XP, subject XP and question accuracy", async ({ page }) => {
+  await page.goto("/");
+  await addManual(page, "civil-procedure", "questions", 30, { attempted: 28, correct: 22 });
+  await expect(page.getByRole("progressbar", { name: "Overall XP" })).toHaveAttribute("aria-valuenow", "671");
+  await expect(page.getByRole("progressbar", { name: "วิแพ่ง XP" })).toHaveAttribute("aria-valuenow", "701");
+  await expect(page.getByRole("progressbar", { name: "ทำข้อสอบ mission" })).toHaveAttribute("aria-valuenow", "30");
+  await expect(page.locator(".daily-reward")).toContainText("วันนี้เรียนแล้ว 30 นาที");
+  await page.getByRole("button", { name: "◷ ดูประวัติ" }).click();
+  await expect(page.locator(".history-list")).toContainText("วิแพ่ง · ทำข้อสอบ");
+  await expect(page.locator(".history-list")).toContainText("28 ข้อ · ถูก 22 · Accuracy 79%");
+  await expect(page.locator(".history-list")).toContainText("+21 XP");
+});
+
+test("timer awards 30 and 60 minute checkpoints without double counting on finish", async ({ page }) => {
+  await page.clock.install();
+  await page.goto("/");
+  await page.locator(".start-button").click();
+  await page.getByLabel("เลือกรูปแบบการเรียน").selectOption("reading");
+  await page.getByRole("button", { name: "▶ เริ่มจับเวลา" }).click();
+  await page.clock.fastForward(30 * 60 * 1000 + 500);
+  await expect(page.getByRole("progressbar", { name: "อ่านเนื้อหา mission" })).toHaveAttribute("aria-valuenow", "30");
+  await expect(page.getByRole("progressbar", { name: "Overall XP" })).toHaveAttribute("aria-valuenow", "670");
+  await page.clock.fastForward(30 * 60 * 1000);
+  await expect(page.getByRole("progressbar", { name: "อ่านเนื้อหา mission" })).toHaveAttribute("aria-valuenow", "60");
+  await expect(page.getByRole("progressbar", { name: "Overall XP" })).toHaveAttribute("aria-valuenow", "690");
+  await page.getByRole("button", { name: "จบ Session และบันทึก 60 นาที" }).click();
+  await expect(page.getByRole("progressbar", { name: "Overall XP" })).toHaveAttribute("aria-valuenow", "690");
+  await page.getByRole("button", { name: "◷ ดูประวัติ" }).click();
+  await expect(page.locator(".history-list")).toContainText("60 นาที");
+  await expect(page.locator(".history-list")).toContainText("+40 XP");
+});
+
+test("47 minute timer keeps partial time and XP", async ({ page }) => {
+  await page.clock.install();
+  await page.goto("/");
+  await page.locator(".start-button").click();
+  await page.getByRole("button", { name: "▶ เริ่มจับเวลา" }).click();
+  await page.clock.fastForward(47 * 60 * 1000 + 500);
+  await page.getByRole("button", { name: "จบ Session และบันทึก 47 นาที" }).click();
+  await expect(page.getByRole("progressbar", { name: "Overall XP" })).toHaveAttribute("aria-valuenow", "679");
+  await expect(page.getByRole("progressbar", { name: "อ่านเนื้อหา mission" })).toHaveAttribute("aria-valuenow", "47");
+  await page.getByRole("button", { name: "◷ ดูประวัติ" }).click();
+  await expect(page.locator(".history-list")).toContainText("47 นาที");
+  await expect(page.locator(".history-list")).toContainText("+29 XP");
+});
+
+test("a 30 minute question session is a complete checkpoint with optional accuracy", async ({ page }) => {
+  await page.clock.install();
+  await page.goto("/");
+  await page.locator(".start-button").click();
+  await page.getByLabel("เลือกรูปแบบการเรียน").selectOption("questions");
+  await page.getByLabel("จำนวนข้อที่ทำ").fill("28");
+  await page.getByLabel("จำนวนข้อที่ตอบถูก").fill("22");
+  await page.getByRole("button", { name: "▶ เริ่มจับเวลา" }).click();
+  await page.clock.fastForward(30 * 60 * 1000 + 500);
+  await expect(page.getByRole("progressbar", { name: "Overall XP" })).toHaveAttribute("aria-valuenow", "675");
+  await page.getByRole("button", { name: "จบ Session และบันทึก 30 นาที" }).click();
+  await page.getByRole("button", { name: "◷ ดูประวัติ" }).click();
+  await expect(page.locator(".history-list")).toContainText("28 ข้อ · ถูก 22 · Accuracy 79%");
+  await expect(page.locator(".history-list")).toContainText("+25 XP");
+});
+
+test("daily completion bonus is granted once", async ({ page }) => {
+  await page.goto("/");
+  await addManual(page, "civil", "reading", 240);
+  await addManual(page, "civil", "questions", 30);
+  await addManual(page, "civil", "summary", 30);
+  await addManual(page, "civil", "lecture", 30);
+  await expect(page.locator(".quest-count")).toHaveText("4/4");
+  await expect(page.locator(".daily-reward")).toContainText("รับโบนัสครบทุกกิจกรรมแล้ว +30 Overall XP");
+  await expect(page.getByRole("progressbar", { name: "Overall XP" })).toHaveAttribute("aria-valuenow", "865");
+  await addManual(page, "civil", "lecture", 30);
+  await expect(page.getByRole("progressbar", { name: "Overall XP" })).toHaveAttribute("aria-valuenow", "880");
 });

@@ -2043,3 +2043,131 @@ dialog p {
     scroll-behavior: auto !important;
   }
 }
+
+/* Character equipment is rendered on a pose-aware transparent layer. */
+.character-avatar {
+  position: absolute;
+  bottom: 4px;
+  height: calc(100% - 7px);
+  aspect-ratio: 2 / 3;
+  max-width: 95%;
+  animation: breathe 5s ease-in-out infinite;
+  transform-origin: bottom center;
+  z-index: 1;
+}
+.character-avatar .main-character {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100% !important;
+  max-width: none;
+  object-fit: contain;
+  animation: none;
+  display: block;
+}
+.accessory-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.accessory {
+  position: absolute;
+  left: var(--accessory-left);
+  top: var(--accessory-top);
+  width: var(--accessory-width);
+  height: auto;
+  overflow: visible;
+  transform: translate(-50%, -50%) rotate(var(--accessory-rotation));
+  filter: drop-shadow(1px 2px 1px #5f474b35);
+  animation: equip-pop 260ms ease-out both;
+}
+.accessory-glasses { z-index: 5; }
+.accessory-id-card, .accessory-watch, .accessory-pen { z-index: 4; }
+.accessory-tablet, .accessory-bag { z-index: 3; }
+@keyframes equip-pop {
+  from { opacity: 0; scale: 0.7; }
+  to { opacity: 1; scale: 1; }
+}
+
+.activity-quest {
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  padding-block: 13px;
+}
+.quest-activity-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #f1e5cf;
+  border: 1px solid #d6bfa3;
+}
+.quest-activity-icon .game-icon { width: 29px; height: 29px; }
+.mission-complete {
+  float: right;
+  color: #718c68;
+  font-size: 9px;
+  font-weight: 800;
+}
+.reward-claimed { background: #e4ecd8; border-color: #9eb38f; }
+.quest-progress small { min-width: 74px; }
+
+.study-selectors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.study-selectors .field { margin-block: 7px 12px; }
+.study-selectors .field span { display: flex; align-items: center; gap: 6px; }
+.study-selectors .field b {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e8cbd2;
+  color: #8e6170;
+}
+.session-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 9px 11px;
+  border: 1px dashed #cbb29c;
+  border-radius: 11px;
+  background: #fff4df;
+  font-size: 11px;
+}
+.session-summary strong { margin-left: auto; color: #b66f85; }
+.question-results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #d3bca7;
+  border-radius: 12px;
+}
+.question-results legend { padding-inline: 6px; font-size: 11px; color: #917765; }
+.question-results label { font-size: 10px; }
+.question-results input {
+  width: 100%;
+  margin-top: 5px;
+  padding: 9px;
+  border: 1px solid #cdb7a3;
+  border-radius: 9px;
+  background: #fffdf7;
+}
+.question-results strong { grid-column: 1 / -1; color: #718c68; font-size: 11px; }
+.form-error { color: #a34f54; margin-top: 8px; }
+.checkpoint-toast { background: #6f8066; border-color: #d9c988; }
+
+@media (max-width: 640px) {
+  .study-selectors { grid-template-columns: 1fr; gap: 0; }
+  .study-selectors .field { margin-block: 5px; }
+  .timer-display { font-size: 54px; }
+  .session-summary strong { width: 100%; margin-left: 0; }
+}

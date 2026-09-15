@@ -26,11 +26,3 @@ export const mockSubjects = [
   },
   { id: "court", name: "ระเบียบศาล", level: 10, xp: 560, color: "#c7a35d" },
 ];
-
-export const mockQuests = [
-  { subject: "civil-procedure", target: 60, title: "อ่านวิแพ่ง 60 นาที" },
-  { subject: "criminal", target: 45, title: "อ่านอาญา 45 นาที" },
-  { subject: "civil", target: 30, title: "อ่านแพ่ง 30 นาที" },
-  { subject: "court", target: 20, title: "อ่านระเบียบศาล 20 นาที" },
-  { subject: null, target: 180, title: "อ่านรวมวันนี้ครบ 3 ชั่วโมง" },
-];

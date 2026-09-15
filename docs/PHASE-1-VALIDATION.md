@@ -1,48 +1,47 @@
 # Phase 1 validation
 
-ตรวจเมื่อ 15 กันยายน 2026 บน Windows / Node.js 24.18.0 / Chrome ผ่าน Playwright
+ตรวจเมื่อ 15 กันยายน 2026 บน Windows / Node.js 24.18.0 / Google Chrome ผ่าน Playwright โดยใช้ production Workers preview ที่ `http://127.0.0.1:4173`
 
 ## ผลการตรวจ
 
 | รายการ | ผล |
 | --- | --- |
-| npm install | ผ่าน; dependency audit ไม่พบ vulnerability |
-| npm run cf-typegen | ผ่าน; สร้าง Worker runtime types จาก Wrangler |
-| npm run check:assets | ผ่าน: 6 characters + 2 design references |
+| npm run check:assets | ผ่าน: character ต้นฉบับ 6 ภาพ, design references 2 ภาพ และ environment 2 layers |
 | npm run typecheck | ผ่าน |
-| npm run lint | ผ่าน |
-| npm test | ผ่าน 5 tests: Level/XP, เลือกชุด, manual selection และ equipment state |
+| npm run lint | ผ่าน ไม่มี error/warning |
+| npm test | ผ่าน 10 tests |
+| npm run test:e2e | ผ่าน 6 tests บน production preview |
 | npm run build | ผ่านทั้ง Workers และ client bundles |
-| npm run test:e2e บน Vite dev | ผ่าน 2 tests |
-| npm run test:e2e บน local Workers build preview | ผ่าน 2 tests |
-| console / page errors / HTTP errors ใน browser test | ไม่พบ |
+| console / page / HTTP errors | ไม่พบใน browser test |
 | git diff --check | ผ่าน |
 
-## สิ่งที่ browser tests ตรวจจริง
+## Unit tests
 
-- ขนาด viewport 1440, 1024, 768, 390 และ 320px: ไม่มี horizontal page overflow
-- รูปทุกตัวโหลดสำเร็จ, หน้าแรกเป็นชุดสูท Lv.17
-- Mobile: ตัวละครอยู่ก่อนรายวิชา, วิวัฒนาการเป็น horizontal scroll ภายใน panel
-- ปฏิเสธเวลา 0 นาที, เพิ่มวิแพ่ง 240 นาทีแล้วเป็น Lv.20 / 50 XP และภาพชุดกากี
-- ภารกิจรายวิชาและอ่านรวมสำเร็จ, ประวัติมีรายการถูกต้อง
-- เลือกชุดสูทย้อนหลังที่ Lv.20, เพิ่มเป็น Lv.21 แล้วยังคงชุดสูท และเปิดโหมดอัตโนมัติเพื่อกลับชุดกากี
-- ชุดที่ล็อกเลือกไม่ได้; ไอเทมสวม/ถอดแล้วอัปเดตทั้ง slot และกระเป๋า
-- จับเวลา 65 วินาที → พัก 30 วินาทีโดยเวลาอ่านไม่เพิ่ม → อ่านต่อ 60 วินาที → บันทึก 2 นาที / 20 XP
-- รีเฟรชคืนค่า mock เริ่มต้น
-- Mobile touch: เพิ่มแพ่ง 30 นาที, Level รายวิชาเพิ่ม, เลือกกลับไปใช้เสื้อยืด และสวม/ถอดปากกา
+- Character manifest ครบทุกขอบเขต Level และ manual outfit ยังคงทำงาน
+- Equipment state สวม/ถอดแต่ละ slot โดยไม่แก้ state เดิม
+- Activity checkpoint ที่ 30 และ 60 นาทีให้ XP ถูกต้อง
+- Session อ่าน 47 นาทีได้ 20 checkpoint XP + 9 partial XP = 29 XP
+- Manual entry ได้ 85% ของ Timer XP
+- XP เพิ่มกับ track ของวิชาที่เลือกและข้าม Level ได้ถูกต้อง
+- Question result เป็น optional; 28 ข้อ ถูก 22 ได้ Accuracy 79%
+- Daily completion bonus พร้อมรับเพียงครั้งเดียว
 
-## Visual review
+## Browser tests และ visual review
 
-ตรวจ screenshot Desktop และ Mobile ด้วยสายตา: ใช้ตัวละครจากชุดที่ผู้ใช้แนบเท่านั้น มีฉากห้องอ่านหนังสือ SVG แยกชั้น background/foreground, ชุดไอคอนวิชาที่วาดในระบบเดียวกัน, วิชาอยู่ซ้ายและภารกิจอยู่ขวาบน desktop; mobile เรียงใหม่ ใช้เมนูล่าง และเห็นตัวละคร อุปกรณ์กับปุ่มเริ่มอ่านครบใน viewport 390×844
+- Layered accessories แสดง/หายทันทีเมื่อ equip/unequip และสถานะตรงกันใน slot กับ inventory
+- เปลี่ยนจากชุดสูทเป็นเสื้อยืดแล้ว accessory ยังคงอยู่และเปลี่ยนไปใช้ anchor ของ stage ใหม่
+- ตรวจ responsive ที่ 1440, 1024, 768, 390 และ 320px โดยไม่มี horizontal overflow
+- Mobile reflow วางตัวละครก่อน Subject panel และเมนูเป็น bottom navigation
+- Manual วิแพ่ง + ทำข้อสอบ 30 นาทีได้ 21 XP, Subject XP เพิ่ม, Mission เพิ่ม 30 นาที และ History แสดง Accuracy
+- Timer checkpoint 30/60 นาทีเพิ่มเวลาและ XP อัตโนมัติ; เมื่อจบที่ 60 นาทีไม่ double count
+- Timer 47 นาทีบันทึกเวลาจริง 47 นาทีและ +29 XP
+- ทำข้อสอบครบ 30 นาทีถือเป็น checkpoint เต็ม +25 XP และเก็บผลข้อสอบ optional
+- ทำครบเป้าหมายกิจกรรมทั้ง 4 ได้โบนัส +30 Overall XP ครั้งเดียว
+- Screenshot ใหม่บันทึกจาก production build พร้อม accessory layers:
+  - [Desktop](screenshots/desktop.png)
+  - [Mobile full page](screenshots/mobile.png)
+  - [Mobile viewport](screenshots/mobile-viewport.png)
 
-- [Desktop](screenshots/desktop.png)
-- [Mobile full page](screenshots/mobile.png)
-- [Mobile viewport](screenshots/mobile-viewport.png)
+## ขอบเขต
 
-Screenshots บันทึกจาก local Workers preview ของ build ที่ผ่าน tests ฟอนต์ถูกเสิร์ฟในเครื่อง
-
-## ขอบเขตของผลตรวจ
-
-ทดสอบ Chrome desktop และ mobile emulation; ไม่ได้ตรวจบนอุปกรณ์ iOS/Android จริงหรือ Safari ข้อมูล ชุดที่เลือก และไอเทมที่สวมอยู่ในหน่วยความจำและรีเซ็ตเมื่อ refresh; streak และภารกิจเป็น mock สำหรับทดลองในหน้าเดียว ไอเทมไม่มีโบนัส
-
-ไม่ได้ทำ D1, Login/Auth, PIN, R2, production deploy หรือ Phase 2 รอผู้ใช้ตรวจ UI ก่อนเริ่มงานระยะถัดไป
+ข้อมูลทั้งหมดเป็น React mock state และรีเซ็ตเมื่อ refresh ไม่มี D1, persistence, Login/Auth/PIN, R2, production deploy หรือ Phase 2 ภาพ character WebP ต้นฉบับทั้ง 6 ไม่ถูกแก้ไขหรือ regenerate และลบ source ZIP ที่ซ้ำหลังยืนยันว่า extracted assets ครบแล้ว

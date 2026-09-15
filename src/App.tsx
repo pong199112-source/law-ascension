@@ -1,21 +1,19 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
-import { mockPlayer, mockSubjects, mockQuests } from "./data/mock";
+import { studyActivities, activityById, type ActivityId } from "./data/study";
 import { equipmentItems } from "./data/equipment";
 import type { EquipmentId, EquipmentState } from "./data/equipment";
 import { activeCharacter, toggleEquipment } from "./domain/customization";
+import { manualXpForMinutes, calculateAccuracy } from "./domain/study";
+import { useStudyEngine } from "./hooks/useStudyEngine";
 import { GameIcon } from "./components/GameIcon";
 import { CharacterCollection } from "./components/CharacterCollection";
 import { EquipmentPanel, EquippedSlots } from "./components/EquipmentPanel";
-import {
-  addReadingXp,
-  characterForLevel,
-  characterStages,
-} from "./domain/progression";
+import { AccessoryLayer } from "./components/AccessoryLayer";
+import { characterForLevel, characterStages } from "./domain/progression";
 import { Progress } from "./components/Progress";
 import { Modal } from "./components/Modal";
 
-type Session = { id: number; subject: string; minutes: number; time: string };
 type Overlay = "manual" | "timer" | "history" | null;
 const stageNames = [
   "ก้าวแรก",
@@ -31,38 +29,22 @@ const formatSeconds = (value: number) =>
     .padStart(2, "0")}:${(value % 60).toString().padStart(2, "0")}`;
 
 export default function App() {
-  const [player, setPlayer] = useState(mockPlayer);
-  const [subjects, setSubjects] = useState(mockSubjects);
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const study = useStudyEngine();
+  const { player, subjects, sessions, missionProgress, bonusAwarded, todayMinutes,
+    subject, setSubject, activity, setActivity, elapsed, startedAt, timerLocked,
+    notice, setNotice } = study;
   const [overlay, setOverlay] = useState<Overlay>(null);
-  const [subject, setSubject] = useState("civil-procedure");
   const [minutes, setMinutes] = useState("30");
-  const [notice, setNotice] = useState("");
+  const [attempted, setAttempted] = useState("");
+  const [correct, setCorrect] = useState("");
+  const [formError, setFormError] = useState("");
   const [manualOutfit, setManualOutfit] = useState<string | null>(null);
   const [equipped, setEquipped] = useState<EquipmentState>({});
-  const [elapsed, setElapsed] = useState(0);
-  const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [storedSeconds, setStoredSeconds] = useState(0);
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
     const tick = window.setInterval(() => setNow(Date.now()), 60_000);
     return () => window.clearInterval(tick);
   }, []);
-  useEffect(() => {
-    if (startedAt === null) return;
-    const interval = window.setInterval(
-      () =>
-        setElapsed(storedSeconds + Math.floor((Date.now() - startedAt) / 1000)),
-      250,
-    );
-    return () => window.clearInterval(interval);
-  }, [startedAt, storedSeconds]);
-  useEffect(() => {
-    if (!notice) return;
-    const timeout = window.setTimeout(() => setNotice(""), 5000);
-    return () => window.clearTimeout(timeout);
-  }, [notice]);
-
   const stage = activeCharacter(player.level, manualOutfit);
   const currentStage = characterStages.indexOf(characterForLevel(player.level));
   function chooseOutfit(file: string | null) {
@@ -71,7 +53,7 @@ export default function App() {
     setNotice(
       file === null
         ? "เปิดเลือกชุดอัตโนมัติตาม Level แล้ว"
-        : "เปลี่ยนชุดแล้ว · ชุดนี้จะอยู่กับคุณแม้ Level เพิ่ม",
+        : "เปลี่ยนชุดแล้ว · อุปกรณ์ย้ายตามท่าของชุดใหม่แล้ว",
     );
   }
   function equipItem(id: EquipmentId) {
@@ -79,97 +61,43 @@ export default function App() {
     setNotice(`${equipped[item.slot] === id ? "ถอด" : "สวม"}${item.name}แล้ว`);
     setEquipped((previous) => toggleEquipment(previous, id));
   }
-  const todayMinutes = sessions.reduce(
-    (total, session) => total + session.minutes,
-    0,
-  );
-  const questMinutes = (id: string | null) =>
-    sessions
-      .filter((session) => id === null || session.subject === id)
-      .reduce((sum, session) => sum + session.minutes, 0);
-  const completedQuests = mockQuests.filter(
-    (quest) => questMinutes(quest.subject) >= quest.target,
+  const completedMissions = studyActivities.filter(
+    (entry) => missionProgress[entry.id] >= entry.targetMinutes,
   ).length;
   const countdown = Math.max(
     0,
     Math.ceil((Date.parse(player.examDate) - now) / 86400000),
   );
 
-  function recordReading(amount: number) {
-    const result = addReadingXp(player.level, player.xp, amount);
-    setPlayer((previous) => ({
-      ...previous,
-      ...result,
-      totalMinutes: previous.totalMinutes + amount,
-    }));
-    setSubjects((previous) =>
-      previous.map((entry) =>
-        entry.id === subject
-          ? { ...entry, ...addReadingXp(entry.level, entry.xp, amount) }
-          : entry,
-      ),
-    );
-    setSessions((previous) => [
-      {
-        id: Date.now(),
-        subject,
-        minutes: amount,
-        time: new Date().toLocaleTimeString("th-TH", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-      ...previous,
-    ]);
-    setNotice(
-      `บันทึก ${amount} นาทีแล้ว · +${amount * 10} XP${result.level > player.level ? ` · Level Up! Lv.${result.level}` : ""}`,
-    );
-    setOverlay(null);
+  function optionalResults() {
+    if (activity !== "questions" || (!attempted && !correct)) return {};
+    try {
+      const attemptedValue = Number(attempted), correctValue = Number(correct);
+      calculateAccuracy(attemptedValue, correctValue);
+      setFormError("");
+      return { attempted: attemptedValue, correct: correctValue };
+    } catch {
+      setFormError("กรอกจำนวนข้อทั้งสองช่อง และจำนวนข้อถูกต้องต้องไม่เกินจำนวนข้อที่ทำ");
+      return null;
+    }
   }
   function submitManual(event: FormEvent) {
     event.preventDefault();
     const amount = Number(minutes);
-    if (Number.isInteger(amount) && amount >= 1 && amount <= 720)
-      recordReading(amount);
-  }
-  function pauseTimer() {
-    const seconds =
-      startedAt === null
-        ? elapsed
-        : storedSeconds + Math.floor((Date.now() - startedAt) / 1000);
-    setElapsed(seconds);
-    setStoredSeconds(seconds);
-    setStartedAt(null);
-  }
-  function finishTimer() {
-    const seconds =
-      startedAt === null
-        ? elapsed
-        : storedSeconds + Math.floor((Date.now() - startedAt) / 1000);
-    const amount = Math.min(720, Math.floor(seconds / 60));
-    if (amount < 1) return;
-    recordReading(amount);
-    setStartedAt(null);
-    setElapsed(0);
-    setStoredSeconds(0);
+    const results = optionalResults();
+    if (results && Number.isInteger(amount) && amount >= 1 && amount <= 720) {
+      study.recordManual(amount, results.attempted, results.correct);
+      setOverlay(null);
+    }
   }
   const close = () => setOverlay(null);
-  const subjectSelect = (
-    <label className="field">
-      วิชาที่อ่าน
-      <select
-        value={subject}
-        disabled={startedAt !== null || storedSeconds > 0}
-        onChange={(event) => setSubject(event.target.value)}
-      >
-        {subjects.map((entry) => (
-          <option key={entry.id} value={entry.id}>
-            {entry.name}
-          </option>
-        ))}
-      </select>
-    </label>
+  const selectors = (
+    <div className="study-selectors">
+      <label className="field"><span><b>1</b> เลือกวิชา</span><select aria-label="เลือกวิชา" value={subject} disabled={timerLocked} onChange={(event) => setSubject(event.target.value)}>{subjects.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select></label>
+      <label className="field"><span><b>2</b> เลือกรูปแบบการเรียน</span><select aria-label="เลือกรูปแบบการเรียน" value={activity} disabled={timerLocked} onChange={(event) => { setActivity(event.target.value as ActivityId); setAttempted(""); setCorrect(""); }}>{studyActivities.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select></label>
+    </div>
   );
+  const questionFields = activity === "questions" && <fieldset className="question-results"><legend>ผลข้อสอบ (ไม่บังคับ · ไม่กระทบ XP)</legend><label>จำนวนข้อที่ทำ<input aria-label="จำนวนข้อที่ทำ" type="number" min="1" value={attempted} onChange={(event) => setAttempted(event.target.value)} /></label><label>ตอบถูก<input aria-label="จำนวนข้อที่ตอบถูก" type="number" min="0" value={correct} onChange={(event) => setCorrect(event.target.value)} /></label>{attempted && correct && Number(correct) <= Number(attempted) && <strong>Accuracy {calculateAccuracy(Number(attempted), Number(correct))}%</strong>}</fieldset>;
 
   return (
     <div className="app-shell">
@@ -315,9 +243,9 @@ export default function App() {
                 <h2>
                   <GameIcon name="book" /> เส้นทางวิชาของฉัน
                 </h2>
-                <span className="tiny-label">5 วิชา</span>
+                <span className="tiny-label">เลือกวิชาทุก Session</span>
               </div>
-              <p className="panel-subtitle">สะสมความรู้ ทีละบท ทีละก้าว</p>
+              <p className="panel-subtitle">XP และ Level แยกตามวิชาที่คุณเลือกเรียน</p>
               <div className="subject-list">
                 {subjects.map((entry) => (
                   <button
@@ -325,8 +253,7 @@ export default function App() {
                     className="subject-card"
                     style={{ "--accent": entry.color } as CSSProperties}
                     onClick={() => {
-                      if (startedAt === null && storedSeconds === 0)
-                        setSubject(entry.id);
+                      if (!timerLocked) setSubject(entry.id);
                       setOverlay("timer");
                     }}
                   >
@@ -351,9 +278,9 @@ export default function App() {
               <div className="study-tip">
                 <span>✧</span>
                 <p>
-                  ไม่ต้องเก่งที่สุดในวันนี้
+                  เลือกวิชาตามตารางจริงของวันนี้
                   <br />
-                  <strong>แค่เก่งกว่าเมื่อวานก็พอ</strong>
+                  <strong>ทุกกิจกรรมสะสม XP ให้วิชานั้น</strong>
                 </p>
               </div>
             </section>
@@ -372,12 +299,10 @@ export default function App() {
                   ก็ใกล้ความฝันแล้ว ♡
                 </div>
                 <div className="character-shadow" />
-                <img
-                  className="main-character"
-                  src={stage.file}
-                  alt={`ตัวละครผู้หญิง Lv.${player.level} ${stage.label}`}
-                  fetchPriority="high"
-                />
+                <div className="character-avatar">
+                  <img className="main-character" src={stage.file} alt={`ตัวละครผู้หญิง Lv.${player.level} ${stage.label}`} fetchPriority="high" />
+                  <AccessoryLayer equipped={equipped} stageFile={stage.file} />
+                </div>
                 <span className="character-level">✦ Lv. {player.level}</span>
               </div>
               <div className="character-caption">
@@ -396,15 +321,14 @@ export default function App() {
               >
                 <span>▶</span>
                 {startedAt !== null
-                  ? `กำลังอ่าน · ${formatSeconds(elapsed)}`
+                  ? `กำลังเรียน · ${formatSeconds(elapsed)}`
                   : "เริ่มอ่านวันนี้"}
                 <span>→</span>
               </button>
               <div className="secondary-actions">
                 <button
                   onClick={() => {
-                    if (startedAt !== null || storedSeconds > 0)
-                      setOverlay("timer");
+                    if (timerLocked) setOverlay("timer");
                     else setOverlay("manual");
                   }}
                 >
@@ -421,61 +345,49 @@ export default function App() {
                 <h2>
                   <GameIcon name="quest" /> ภารกิจวันนี้
                 </h2>
-                <span className="quest-count">{completedQuests}/5</span>
+                <span className="quest-count">{completedMissions}/4</span>
               </div>
               <p className="panel-subtitle">
-                ภารกิจเล็ก ๆ สู่ความสำเร็จที่ยิ่งใหญ่
+                ทำกิจกรรมกับวิชาไหนก็ได้ · Progress นับเวลาจริง
               </p>
               <div className="quest-list">
-                {mockQuests.map((quest) => {
-                  const done = questMinutes(quest.subject);
-                  const complete = done >= quest.target;
+                {studyActivities.map((quest) => {
+                  const done = missionProgress[quest.id];
+                  const complete = done >= quest.targetMinutes;
                   return (
                     <div
-                      className={`quest ${complete ? "complete" : ""}`}
-                      key={quest.title}
+                      className={`quest activity-quest ${complete ? "complete" : ""}`}
+                      key={quest.id}
                     >
-                      <span
-                        className="quest-check"
-                        aria-label={complete ? "สำเร็จแล้ว" : "ยังไม่สำเร็จ"}
-                      >
-                        {complete ? "✓" : ""}
-                      </span>
+                      <span className="quest-activity-icon"><GameIcon name={quest.icon} /></span>
                       <div>
-                        <strong>{quest.title}</strong>
-                        {subjects.find(
-                          (entry) =>
-                            entry.id === quest.subject && entry.xp >= 800,
-                        ) && (
-                          <span className="near-level">✦ ใกล้ Level Up</span>
-                        )}
+                        <strong>{quest.name}</strong>
+                        {complete && <span className="mission-complete">✓ สำเร็จ</span>}
                         <div className="quest-progress">
                           <Progress
                             value={done}
-                            max={quest.target}
-                            label={quest.title}
+                            max={quest.targetMinutes}
+                            label={`${quest.name} mission`}
                           />
-                          <small>
-                            {Math.min(done, quest.target)}/{quest.target}
-                          </small>
+                          <small>{done}/{quest.targetMinutes} นาที</small>
                         </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="daily-reward">
+              <div className={`daily-reward ${bonusAwarded ? "reward-claimed" : ""}`}>
                 <GameIcon name="gift" />
                 <div>
-                  <strong>วันนี้อ่านแล้ว {todayMinutes} นาที</strong>
-                  <small>ทำครบ 5 ภารกิจ เก็บความภูมิใจอีกวัน</small>
+                  <strong>วันนี้เรียนแล้ว {todayMinutes} นาที</strong>
+                  <small>{bonusAwarded ? "รับโบนัสครบทุกกิจกรรมแล้ว +30 Overall XP" : "ครบทั้ง 4 กิจกรรม รับ +30 Overall XP อัตโนมัติ"}</small>
                 </div>
-                <span>✧</span>
+                <span>{bonusAwarded ? "✓" : "✧"}</span>
               </div>
               <div className="encouragement">
-                “ ความพยายามเล็ก ๆ ในทุกวัน
+                “ เลือกวิชาตามแผนของคุณ
                 <br />
-                <strong>สร้างอนาคตที่ยิ่งใหญ่ได้ ”</strong>
+                <strong>แล้วเติบโตจากทุกกิจกรรม ”</strong>
                 <span>KEEP GOING, FUTURE YOU IS PROUD.</span>
               </div>
             </section>
@@ -505,13 +417,14 @@ export default function App() {
         </div>
       )}
       {overlay === "manual" && (
-        <Modal title="＋ เพิ่มเวลาอ่าน" onClose={close}>
-          <p>ทุกนาทีที่ตั้งใจ มีค่าเสมอ · 1 นาที = 10 XP</p>
+        <Modal title="＋ เพิ่มเวลาเรียน" onClose={close}>
+          <p>เลือกวิชาและกิจกรรม · เพิ่มเวลาเองได้ 85% ของ XP จาก Timer</p>
           <form onSubmit={submitManual}>
-            {subjectSelect}
+            {selectors}
             <label className="field">
-              เวลาที่อ่าน (นาที)
+              เวลาที่เรียน (นาที)
               <input
+                aria-label="เวลาที่เรียน (นาที)"
                 type="number"
                 min="1"
                 max="720"
@@ -533,87 +446,85 @@ export default function App() {
                 </button>
               ))}
             </div>
+            {questionFields}
+            {formError && <p className="form-error" role="alert">{formError}</p>}
             <button className="primary full" type="submit">
-              บันทึกเวลาอ่าน · +{Math.max(0, Number(minutes) * 10) || 0} XP
+              บันทึกเวลา · +{Number(minutes) > 0 && Number(minutes) <= 720 ? manualXpForMinutes(activity, Number(minutes)) : 0} XP
             </button>
           </form>
         </Modal>
       )}
       {overlay === "timer" && (
-        <Modal title="📖 เวลาแห่งการเติบโต" onClose={close}>
-          {subjectSelect}
+        <Modal title="เวลาแห่งการเติบโต" onClose={close}>
+          {selectors}
+          <div className="session-summary"><span>{subjects.find((entry) => entry.id === subject)?.name}</span><b>·</b><span>{activityById(activity).name}</span><strong>ทุก 30 นาที +{activityById(activity).checkpointXp} XP</strong></div>
           <div className="timer-display">{formatSeconds(elapsed)}</div>
           <p className="timer-hint">
             {startedAt !== null
-              ? "ค่อย ๆ อ่าน เราจับเวลาให้เอง ♡"
-              : "พร้อมแล้ว เริ่มบทใหม่ไปด้วยกัน"}
+              ? "จับเวลาอยู่ · checkpoint บันทึกให้อัตโนมัติ ♡"
+              : elapsed > 0 ? "พักอยู่ เวลาจะไม่เพิ่ม" : "เลือกครบแล้ว เริ่ม Session ได้เลย"}
           </p>
           <button
             className="primary full"
             onClick={() => {
-              if (startedAt !== null) pauseTimer();
-              else setStartedAt(Date.now());
+              if (startedAt !== null) study.pauseTimer();
+              else study.startTimer();
             }}
           >
             {startedAt !== null
-              ? "Ⅱ พักสักครู่"
+                ? "Ⅱ พักสักครู่"
               : elapsed > 0
-                ? "▶ อ่านต่อ"
+                ? "▶ เรียนต่อ"
                 : "▶ เริ่มจับเวลา"}
           </button>
+          {questionFields}
+          {formError && <p className="form-error" role="alert">{formError}</p>}
           <button
             className="secondary full"
             disabled={elapsed < 60}
-            onClick={finishTimer}
+            onClick={() => { const results = optionalResults(); if (results) { study.finishTimer(results.attempted, results.correct); setOverlay(null); setAttempted(""); setCorrect(""); } }}
           >
-            จบการอ่านและบันทึก {Math.min(720, Math.floor(elapsed / 60))} นาที
+            จบ Session และบันทึก {Math.min(720, Math.floor(elapsed / 60))} นาที
           </button>
           <small className="timer-hint">
-            บันทึกเมื่อครบ 1 นาที · เศษวินาทีไม่นับ XP · สูงสุด 720 นาที/ครั้ง
+            Checkpoint ทุก 30 นาที · เวลาที่เหลือได้ XP แบบ prorated · สูงสุด 720 นาที
           </small>
           {elapsed > 0 && startedAt === null && (
             <button
               className="text-button full"
-              onClick={() => {
-                setElapsed(0);
-                setStoredSeconds(0);
-              }}
+              onClick={study.discardPartial}
             >
-              ยกเลิกช่วงนี้และเริ่มใหม่
+              จบช่วงนี้โดยไม่บันทึกเศษเวลาที่ยังไม่ครบ
             </button>
           )}
         </Modal>
       )}
       {overlay === "history" && (
-        <Modal title="◷ ประวัติการอ่านวันนี้" onClose={close}>
+        <Modal title="◷ ประวัติการเรียนวันนี้" onClose={close}>
           {sessions.length === 0 ? (
             <div className="empty-state">
               <span>📚</span>
-              <h3>บทแรกของวันนี้รอคุณอยู่</h3>
-              <p>เริ่มอ่านหรือเพิ่มเวลา แล้วมาดูความก้าวหน้าที่นี่</p>
+              <h3>Session แรกของวันนี้รอคุณอยู่</h3>
+              <p>เลือกวิชา เลือกกิจกรรม แล้วเริ่มจับเวลาได้เลย</p>
               <button className="primary" onClick={() => setOverlay("timer")}>
                 เริ่มอ่านวันนี้
               </button>
             </div>
           ) : (
             <>
-              <p>
-                อ่านแล้ว {todayMinutes} นาที · ได้รับ {todayMinutes * 10} XP
-              </p>
+              <p>เรียนแล้ว {todayMinutes} นาที · {sessions.length} Session</p>
               <ul className="history-list">
                 {sessions.map((session) => (
                   <li key={session.id}>
                     <div>
                       <strong>
-                        {
-                          subjects.find((entry) => entry.id === session.subject)
-                            ?.name
-                        }
+                        {subjects.find((entry) => entry.id === session.subjectId)?.name} · {activityById(session.activityId).shortName}
                       </strong>
-                      <small>วันนี้ {session.time}</small>
+                      <small>วันนี้ {session.time} · {session.method === "timer" ? "Timer" : "เพิ่มเอง"}{session.active ? " · กำลังจับเวลา" : ""}</small>
+                      {session.attempted !== undefined && <small>{session.attempted} ข้อ · ถูก {session.correct} · Accuracy {session.accuracy}%</small>}
                     </div>
                     <span>
-                      {session.minutes} นาที <b>+{session.minutes * 10} XP</b>
+                      {session.minutes} นาที <b>+{session.xp} XP</b>
                     </span>
                   </li>
                 ))}

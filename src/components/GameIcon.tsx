@@ -187,6 +187,15 @@ const drawings: Record<string, ReactNode> = {
       <path d="M24 16C3 18 8-2 24 16c16-18 21 2 0 0z" fill="#f5d993" />
     </>
   ),
+  headphones: (
+    <>
+      <path d="M8 27a16 16 0 0 1 32 0" fill="none" />
+      <rect x="5" y="25" width="10" height="16" rx="5" fill="#a88fc0" />
+      <rect x="33" y="25" width="10" height="16" rx="5" fill="#a88fc0" />
+      <path d="M38 41q-3 5-10 4" />
+      <circle cx="25" cy="44" r="3" fill="#e9bd79" />
+    </>
+  ),
   lock: (
     <>
       <rect x="12" y="21" width="24" height="21" rx="5" fill="#d3c3b5" />

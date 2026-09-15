@@ -42,21 +42,26 @@ npm run dev
 ### ทดลอง UI
 
 - เริ่มต้น Lv.17 ชุดสูท, 650/1,000 XP, อ่านสะสม 86 ชม. 35 นาที และ streak จำลอง 7 วัน
-- “เริ่มอ่านวันนี้” เปิดตัวเลือกวิชาและจับเวลาจริง พัก/อ่านต่อได้ ปิดหน้าต่างแล้วเวลายังเดิน บันทึกเฉพาะนาทีเต็ม
-- “เพิ่มเวลาเอง” รับจำนวนเต็ม 1–720 นาที เลือกวิชาได้ อัปเดตเวลาสะสม, XP, Level, ภารกิจ และประวัติทันที
-- สูตรทดลอง: 1 นาที = 10 XP; 1,000 XP = 1 Level ทั้ง overall และรายวิชา ไม่มี quest bonus
-- ทดลองเพิ่มวิแพ่ง 240 นาที: overall เปลี่ยนจาก Lv.17 เป็น Lv.20 / 50 XP และเปลี่ยนภาพเป็นชุดกากีอัตโนมัติ
+- “เริ่มอ่านวันนี้” ใช้ flow เลือกวิชา → เลือกกิจกรรม → เริ่มจับเวลา โดยวิชาและกิจกรรมเป็นข้อมูลคนละแกน
+- กิจกรรมมี อ่านเนื้อหา, ทำข้อสอบ, ดูสรุป / Infographic และ Lecture / ทำความเข้าใจ เป้าหมายเริ่มต้นแก้ได้จาก `src/data/study.ts`
+- Timer บันทึก checkpoint และให้ XP อัตโนมัติทุก 30 นาทีโดยไม่หยุดเวลา: อ่าน 20, ข้อสอบ 25, สรุป 15 และ Lecture 18 XP ต่อ checkpoint
+- เมื่อจบ Session เศษเวลา 1–29 นาทีได้ XP แบบ prorated ที่ efficiency 75%; ตัวอย่างอ่าน 47 นาทีได้ 20 + 9 = 29 XP และภารกิจนับครบ 47 นาที
+- “เพิ่มเวลาเอง” เลือกทั้งวิชา กิจกรรม และเวลา 1–720 นาที ได้ 85% ของ Timer XP แต่เวลาสะสมและภารกิจนับเต็ม
+- XP เพิ่มพร้อมกันทั้ง Overall และวิชาที่เลือก; 1,000 XP = 1 Level และครบเป้าหมายกิจกรรมทั้ง 4 รับโบนัส +30 Overall XP อัตโนมัติหนึ่งครั้ง
+- Session ทำข้อสอบกรอกจำนวนข้อและจำนวนที่ถูกได้แบบไม่บังคับ History จะแสดง Accuracy โดยคะแนนไม่กระทบ XP
 - กดชุดที่ปลดล็อกแล้วเพื่อย้อนกลับไปใช้ชุดเดิมได้ การเลือกเองจะคงอยู่แม้ Level เพิ่ม และสลับกลับเป็นโหมดอัตโนมัติได้
-- ไอเทม 6 ชิ้นกดสวม/ถอดได้ มี slot และสถานะที่ตัวละครกับกระเป๋า ทั้งหมดยังเป็น mock state และไม่มีโบนัส
+- ไอเทม 6 ชิ้นกดสวม/ถอดแล้วเห็น SVG โปร่งใสซ้อนบนตัวละครทันที ใช้ anchor แยกตาม pose ของชุดทั้ง 6 ขั้น และสถานะตรงกับ slot/inventory
 - ทุกอย่างอยู่ใน React state; รีเฟรชแล้วกลับสู่ mock เริ่มต้น ไม่มีการบันทึกข้ามการเปิดหน้า
-- ชุดภารกิจและ streak เป็น mock สำหรับทดลองในหน้าเดียว ไม่ได้จำลองการข้ามวัน วันสอบแก้ได้ใน mock data และนับถอยหลังจากเวลาจริง
+- Daily Mission ติดตามกิจกรรมด้วยเวลาจริง ไม่ผูกกับวิชา; streak เป็น mock และวันสอบนับถอยหลังจากเวลาจริง
 
 ### ไฟล์หลัก
 
 - `src/App.tsx` — หน้า Home และการเชื่อม interaction
+- `src/components/AccessoryLayer.tsx` — SVG accessory 6 ชิ้นและ anchor configuration สำหรับ character poses ทั้ง 6 ขั้น
 - `src/components/` — HUD icons, ตู้เสื้อผ้า, equipment slots, Progress และ native dialog
-- `src/data/mock.ts` — player, วิชา, ภารกิจ และไอเทม
-- `src/domain/progression.ts`, `src/domain/customization.ts` — Level/XP, การเลือกชุด และ equip state
+- `src/data/mock.ts`, `src/data/study.ts` — player, วิชา, activity goals และ XP config
+- `src/domain/study.ts`, `src/hooks/useStudyEngine.ts` — checkpoint, partial/manual XP, mission bonus และ mock session state
+- `src/domain/progression.ts`, `src/domain/customization.ts` — character Level, การเลือกชุด และ equip state
 - `src/style.css` — desktop/tablet/mobile layouts, animation และ reduced motion
 - `public/assets/characters/manifest.json` — source of truth ของ 6 ระดับ
 - `worker/index.ts`, `wrangler.jsonc`, `vite.config.ts` — Workers / static asset / Vite configuration
@@ -78,6 +83,6 @@ Browser test ใช้ Google Chrome ที่ติดตั้งในเค�
 
 ตรวจ build ที่เสิร์ฟผ่าน local Workers ด้วย `npm run preview` (ปกติ port 4173) แล้วกำหนด `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173` ก่อนรัน `npm run test:e2e`
 
-Asset ZIP ที่เสียถูกแทนด้วยฉบับสมบูรณ์จากผู้ใช้และแตกไฟล์แล้ว ภาพตัวละครไม่ถูกแก้ไขหรือสร้างใหม่ Reference อยู่ใน `design-reference/` เพื่ออ้างอิงการออกแบบเท่านั้น ไม่ถูกเสิร์ฟเป็นหน้าเว็บ ฉากห้องอ่านหนังสือและชุดไอคอนวาดเป็น SVG components แยกจาก character assets ฟอนต์ Noto Sans Thai และ Nunito เสิร์ฟจาก dependency ภายในโปรเจกต์
+Asset Pack ฉบับสมบูรณ์ถูกแตกและตรวจครบแล้ว จึงไม่เก็บ ZIP ซ้ำใน branch ภาพตัวละครทั้ง 6 ไม่ถูกแก้ไขหรือสร้างใหม่ Reference อยู่ใน `design-reference/` เพื่ออ้างอิงการออกแบบเท่านั้น ไม่ถูกเสิร์ฟเป็นหน้าเว็บ ฉากและ accessory SVG แยก layer จาก character assets ฟอนต์ Noto Sans Thai และ Nunito เสิร์ฟจาก dependency ภายในโปรเจกต์
 
 **ขอบเขต:** จบที่ Phase 1 UI review เท่านั้น ยังไม่มี D1, Auth/Login, PIN, R2 หรือ production deploy
