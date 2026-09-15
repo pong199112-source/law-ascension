@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" fill="none">
+  <defs>
+    <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#f2e6d9"/><stop offset="1" stop-color="#ead6c1"/></linearGradient>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#cadcd9"/><stop offset="1" stop-color="#f7eed7"/></linearGradient>
+    <linearGradient id="floor" x2="0" y2="1"><stop stop-color="#d8b49c"/><stop offset="1" stop-color="#ead1b4"/></linearGradient>
+    <pattern id="wallpaper" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M25 12v5m-3-2h6" stroke="#cbb5a1" stroke-opacity=".24" stroke-width="1.5"/></pattern>
+    <pattern id="wood" width="210" height="55" patternUnits="userSpaceOnUse"><path d="M0 54h210M30 0v54M80 20h85m-60 8h70" stroke="#bf977f" stroke-opacity=".25" stroke-width="2"/></pattern>
+  </defs>
+  <!-- Back wall, picture rail and warm wooden floor. No character art. -->
+  <path fill="url(#wall)" d="M0 0h1400v900H0z"/><path fill="url(#wallpaper)" d="M0 0h1400v640H0z"/>
+  <path d="M0 40h1400M0 55h1400" stroke="#fff7e8" stroke-width="8"/>
+  <path d="M0 650h1400v250H0z" fill="url(#floor)"/><path d="M0 650h1400v250H0z" fill="url(#wood)"/>
+  <path d="M0 641h1400" stroke="#bca18b" stroke-width="18"/><path d="M0 631h1400" stroke="#f6e7d4" stroke-width="12"/>
+  <!-- Central arched window with a leafy view and a deep sill. -->
+  <path d="M486 540V243a214 214 0 0 1 428 0v297z" fill="#c6ac95" stroke="#ac917e" stroke-width="4"/>
+  <path d="M500 525V245a200 200 0 0 1 400 0v280z" fill="url(#sky)" stroke="#fff5df" stroke-width="12"/>
+  <path d="M506 427q54-100 119-25 58-116 119-48 86-100 150 2v163H506z" fill="#b9c6a5"/>
+  <path d="M508 474q104-74 181-17 105-98 207-26v90H508z" fill="#a9b794"/>
+  <g fill="#fff9e5" opacity=".65"><ellipse cx="610" cy="242" rx="42" ry="15"/><ellipse cx="803" cy="173" rx="46" ry="13"/></g>
+  <path d="M700 48v479M502 284h398" stroke="#bb9d84" stroke-width="14"/><path d="M697 48v477M502 280h398" stroke="#fff0d7" stroke-width="6"/>
+  <path d="M477 526h447v22H477z" fill="#dfc3a4" stroke="#b39780" stroke-width="3"/><path d="M477 526h447" stroke="#fff1d6" stroke-width="7"/>
+  <!-- Soft gathered curtains, floating above the sill. -->
+  <path d="M467 79q18 199-15 379l62 12q28-206 4-400z" fill="#d6b4b8" stroke="#b6979a" stroke-width="3"/>
+  <path d="M933 79q-18 199 15 379l-62 12q-28-206-4-400z" fill="#d6b4b8" stroke="#b6979a" stroke-width="3"/>
+  <path d="M487 97q13 184-13 343m29-347q12 160-9 352m419-348q-13 184 13 343m-29-347q-12 160 9 352" stroke="#f0d3cf" stroke-width="5"/>
+  <path d="M452 73q248-31 496 0" stroke="#ad937e" stroke-width="9"/>
+  <!-- Bookshelf at the left of the reading nook. -->
+  <g stroke="#b49983" stroke-width="3"><rect x="236" y="182" width="183" height="454" rx="8" fill="#d5b493"/><path d="M250 194h155v426H250z" fill="#bca08b"/>
+    <path d="M244 314h169v12H244zm0 138h169v12H244zm0 143h169v12H244z" fill="#ecd2b0"/>
+    <rect x="260" y="230" width="24" height="82" rx="3" fill="#b2c1af"/><rect x="288" y="220" width="21" height="92" rx="3" fill="#ddb2ae"/><rect x="313" y="238" width="26" height="74" rx="3" fill="#a8bbca"/><path d="m350 226 20-5 21 86-20 5z" fill="#d9c58e"/>
+    <rect x="263" y="375" width="30" height="75" rx="3" fill="#b2a5c0"/><rect x="299" y="359" width="23" height="91" rx="3" fill="#d7b69e"/><rect x="328" y="379" width="56" height="69" rx="5" fill="#e6d8bc"/>
+    <path d="M267 558h121v16H267zm7-21h102v17H274z" fill="#adc3b9"/>
+  </g><g stroke="#f8ebd4" stroke-width="3"><path d="M267 243h9m-9 52h9m19-62h7m-7 59h7m20-40h9m-9 42h9M270 390h15m-15 43h15"/></g>
+  <!-- Study desk, reading lamp, notebook and pencil cup behind the avatar. -->
+  <g stroke="#ae917a" stroke-width="3"><path d="M405 568h203v23H405z" fill="#f2d5af"/><path d="M424 591h16v123h-16zm163 0h15v123h-15z" fill="#c19c7c"/><path d="M442 593h140v47H442z" fill="#dcb795"/><circle cx="513" cy="614" r="4" fill="#ad8b73"/>
+    <path d="M449 565h58l-6-8h-44zM472 557l-12-67 50-32" fill="#aeb9a9"/><path d="m488 451 38-15 20 34-53 20z" fill="#b3c1ae"/><path d="M529 495 571 557h-104z" fill="#fff3c6" opacity=".35" stroke="none"/>
+    <path d="M526 558h66v9h-66z" fill="#b6a7c4"/><path d="M542 551h51v8h-51z" fill="#f9edce"/>
+    <path d="M556 545h23l-2-29h-19z" fill="#d4a9ab"/><path d="m562 517-4-29m10 29 4-35"/>
+  </g>
+  <!-- Pinboard and clock. -->
+  <rect x="974" y="156" width="155" height="176" rx="10" fill="#bc9c86"/><rect x="983" y="165" width="137" height="158" rx="5" fill="#d9bf9b"/>
+  <g transform="rotate(-7 1020 213)"><path d="M993 180h64v86h-64z" fill="#fff2cc"/><circle cx="1024" cy="185" r="4" fill="#ce9296"/><path d="M1005 203h38m-38 13h25m-25 13h32" stroke="#c1a984" stroke-width="3"/></g>
+  <g transform="rotate(8 1090 273)"><path d="M1054 234h55v62h-55z" fill="#e2bfc7"/><path d="m1068 258 9 9 17-20" stroke="#fff3e2" stroke-width="4"/></g>
+  <circle cx="1066" cy="88" r="37" fill="#c3a78e"/><circle cx="1066" cy="88" r="30" fill="#fff0d7"/><path d="M1066 65v25l15 9" stroke="#a48d7a" stroke-width="4" stroke-linecap="round"/>
+  <!-- Tall plant and stool: middle-ground layers. -->
+  <g stroke="#97a184" stroke-width="3"><path d="M976 601q17-63-1-150m1 93 46-43m-44 22-38-28"/><path d="M978 491q-48-6-47-46 47-2 47 46zm1 40q12-59 57-55-1 45-57 55zm-3-62q-30-34-6-60 31 11 6 60z" fill="#afbd9c"/><path d="M973 562q-48-4-56-44 51-4 56 44zm11-5q32-45 65-27-14 37-65 27z" fill="#bec8a8"/></g>
+  <path d="M949 589h55l-8 59h-39z" fill="#d4a897" stroke="#b38f7b" stroke-width="3"/><path d="M946 587h62v13h-62z" fill="#e6c0ad" stroke="#b38f7b" stroke-width="3"/>
+  <ellipse cx="700" cy="737" rx="249" ry="78" fill="#b98e8050"/><ellipse cx="700" cy="728" rx="238" ry="72" fill="#dcc1ba" stroke="#c4a5a0" stroke-width="4"/><ellipse cx="700" cy="728" rx="212" ry="55" stroke="#f0dbce" stroke-width="3" stroke-dasharray="8 7"/>
+  <!-- Warm sunlight on the floor. -->
+  <path d="m548 653 134 7 100 164-220-7z" fill="#fff2d3" opacity=".18"/>
+</svg>

@@ -1,8 +1,10 @@
 # Asset source
 
-`law-ascension-assets-webp.zip` contains the approved visual assets for the prototype.
+The approved asset pack has been extracted and validated for the prototype. The
+source ZIP is intentionally not retained because every required file below is
+already tracked in its runtime/reference location.
 
-Codex should extract it from the repository root so these files exist before building the UI:
+The extracted files are:
 
 - `public/assets/characters/character-lv01-09-casual.webp`
 - `public/assets/characters/character-lv10-19-suit.webp`
