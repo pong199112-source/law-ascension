@@ -9,7 +9,7 @@
 | npm run check:assets | ผ่าน: character ต้นฉบับ 6 ภาพ, design references 2 ภาพ และ environment 2 layers |
 | npm run typecheck | ผ่าน |
 | npm run lint | ผ่าน ไม่มี error/warning |
-| npm test | ผ่าน 12 tests |
+| npm test | ผ่าน 13 tests |
 | npm run test:e2e | ผ่าน 7 tests บน production preview |
 | npm run build | ผ่านทั้ง Workers และ client bundles |
 | console / page / HTTP errors | ไม่พบใน browser test |
@@ -28,10 +28,11 @@
 
 ## Browser tests และ visual review
 
-- Layered accessories แสดง/หายทันทีเมื่อ equip/unequip และสถานะตรงกันใน slot กับ inventory
-- Anchor ทุกชิ้นกำหนด x/y/scale/rotation แยกครบ 6 stages; เปิด preview loadout ของ stage ที่ยังล็อกได้จากตู้เสื้อผ้า
-- Equip 6/6 ทุก stage ยังรักษา silhouette ด้วย smart suppression สำหรับ bag/tablet/ID/pen/watch ที่ซ้ำกับ base art หรือไม่มีจุดยึดตาม pose
-- เปลี่ยนจากชุดสูทเป็นเสื้อยืดแล้ว accessory ยังคงอยู่และเปลี่ยนไปใช้ anchor ของ stage ใหม่
+- Hybrid equipment แสดง/หายทันทีเมื่อ equip/unequip และสถานะตรงกันใน slot กับ inventory
+- แว่น นาฬิกา และ ID card ใช้ wearable anchor แยกครบ 6 stages; เปิด preview loadout ของ stage ที่ยังล็อกได้จากตู้เสื้อผ้า
+- Bag, Tablet และ pen ใช้ scene layout แบบ responsive บน/ข้างโต๊ะ ไม่วางทับ character body
+- Equip 6/6 ทุก stage ยังรักษา silhouette ด้วย suppression rules สำหรับ prop หรือ wearable ที่ซ้ำกับ base art
+- เปลี่ยนจากชุดสูทเป็นเสื้อยืดแล้ว wearable และ scene suppression เปลี่ยนตาม stage โดย equipment state ไม่เปลี่ยน
 - ตรวจ responsive ที่ 1440, 1024, 768, 390 และ 320px โดยไม่มี horizontal overflow
 - Mobile reflow วางตัวละครก่อน Subject panel และเมนูเป็น bottom navigation
 - Manual วิแพ่ง + ทำข้อสอบ 30 นาทีได้ 21 XP, Subject XP เพิ่ม, Mission เพิ่ม 30 นาที และ History แสดง Accuracy
@@ -39,7 +40,7 @@
 - Timer 47 นาทีบันทึกเวลาจริง 47 นาทีและ +29 XP
 - ทำข้อสอบครบ 30 นาทีถือเป็น checkpoint เต็ม +25 XP และเก็บผลข้อสอบ optional
 - ทำครบเป้าหมายกิจกรรมทั้ง 4 ได้โบนัส +30 Overall XP ครั้งเดียว
-- Screenshot ใหม่บันทึกจาก production build พร้อม accessory layers:
+- Screenshot ใหม่บันทึกจาก production build พร้อม Hybrid Equipment Presentation:
   - [Desktop](screenshots/desktop.png)
   - [Mobile full page](screenshots/mobile.png)
   - [Mobile viewport](screenshots/mobile-viewport.png)

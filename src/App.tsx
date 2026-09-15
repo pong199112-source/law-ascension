@@ -10,6 +10,7 @@ import { GameIcon } from "./components/GameIcon";
 import { CharacterCollection } from "./components/CharacterCollection";
 import { EquipmentPanel, EquippedSlots } from "./components/EquipmentPanel";
 import { AccessoryLayer } from "./components/AccessoryLayer";
+import { SceneEquipmentLayer } from "./components/SceneEquipmentLayer";
 import { characterForLevel, characterStages } from "./domain/progression";
 import { Progress } from "./components/Progress";
 import { Modal } from "./components/Modal";
@@ -299,6 +300,7 @@ export default function App() {
                   ก็ใกล้ความฝันแล้ว ♡
                 </div>
                 <div className="character-shadow" />
+                <SceneEquipmentLayer equipped={equipped} stageFile={stage.file} />
                 <div className="character-avatar">
                   <img className="main-character" src={stage.file} alt={`ตัวละครผู้หญิง Lv.${player.level} ${stage.label}`} fetchPriority="high" />
                   <AccessoryLayer equipped={equipped} stageFile={stage.file} />

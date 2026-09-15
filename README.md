@@ -50,14 +50,15 @@ npm run dev
 - XP เพิ่มพร้อมกันทั้ง Overall และวิชาที่เลือก; 1,000 XP = 1 Level และครบเป้าหมายกิจกรรมทั้ง 4 รับโบนัส +30 Overall XP อัตโนมัติหนึ่งครั้ง
 - Session ทำข้อสอบกรอกจำนวนข้อและจำนวนที่ถูกได้แบบไม่บังคับ History จะแสดง Accuracy โดยคะแนนไม่กระทบ XP
 - กดชุดที่ปลดล็อกแล้วเพื่อย้อนกลับไปใช้ชุดเดิมได้ การเลือกเองจะคงอยู่แม้ Level เพิ่ม และสลับกลับเป็นโหมดอัตโนมัติได้
-- ไอเทม 6 ชิ้นใช้ SVG โปร่งใสขนาดเล็กและ anchor แยกตาม pose ของชุดทั้ง 6 ขั้น; ถ้าภาพต้นฉบับมีของลักษณะเดียวกันหรือ pose ไม่มีจุดยึด ระบบจะซ่อน overlay ซ้ำอย่างชาญฉลาดโดย slot/inventory ยังคง equipped
+- ไอเทมใช้ Hybrid Equipment Presentation: แว่น นาฬิกา และ ID card เป็น wearable ขนาดเล็กตาม pose ส่วน bag, Tablet และ pen เป็น prop ในห้องอ่านหนังสือ; ถ้าภาพต้นฉบับมีของชนิดเดียวกัน ระบบจะ suppress ภาพซ้ำโดย slot/inventory ยังคง equipped
 - ทุกอย่างอยู่ใน React state; รีเฟรชแล้วกลับสู่ mock เริ่มต้น ไม่มีการบันทึกข้ามการเปิดหน้า
 - Daily Mission ติดตามกิจกรรมด้วยเวลาจริง ไม่ผูกกับวิชา; streak เป็น mock และวันสอบนับถอยหลังจากเวลาจริง
 
 ### ไฟล์หลัก
 
 - `src/App.tsx` — หน้า Home และการเชื่อม interaction
-- `src/components/AccessoryLayer.tsx` — SVG accessory 6 ชิ้นและ anchor configuration สำหรับ character poses ทั้ง 6 ขั้น
+- `src/components/AccessoryLayer.tsx`, `src/components/SceneEquipmentLayer.tsx` — wearable layers และ scene props แบบ responsive
+- `src/data/accessories.ts` — wearable anchors 6 stages, scene layout และ suppression rules
 - `src/components/` — HUD icons, ตู้เสื้อผ้า, equipment slots, Progress และ native dialog
 - `src/data/mock.ts`, `src/data/study.ts` — player, วิชา, activity goals และ XP config
 - `src/domain/study.ts`, `src/hooks/useStudyEngine.ts` — checkpoint, partial/manual XP, mission bonus และ mock session state

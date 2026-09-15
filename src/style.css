@@ -2105,6 +2105,26 @@ dialog p {
   from { opacity: 0; scale: 0.7; }
   to { opacity: 1; scale: 1; }
 }
+.scene-equipment-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.scene-prop {
+  position: absolute;
+  left: var(--scene-prop-left);
+  top: var(--scene-prop-top);
+  width: var(--scene-prop-width);
+  height: auto;
+  overflow: visible;
+  transform: translate(-50%, -50%) rotate(var(--scene-prop-rotation));
+  filter: drop-shadow(1px 3px 2px #5f474b30);
+  animation: equip-pop 260ms ease-out both;
+}
+.scene-prop-tablet { z-index: 2; }
+.scene-prop-pen { z-index: 1; }
+.scene-prop-bag { z-index: 1; }
 
 .activity-quest {
   grid-template-columns: 38px minmax(0, 1fr);
@@ -2186,4 +2206,7 @@ dialog p {
   .study-selectors .field { margin-block: 5px; }
   .timer-display { font-size: 54px; }
   .session-summary strong { width: 100%; margin-left: 0; }
+  .scene-prop-tablet { width: 16%; }
+  .scene-prop-pen { width: 12%; }
+  .scene-prop-bag { width: 18%; }
 }

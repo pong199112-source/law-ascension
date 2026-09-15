@@ -49,6 +49,13 @@ test("Home renders responsively and equipment appears on the supplied character"
   await page.getByRole("button", { name: "สวมแว่น", exact: true }).last().click();
   await page.getByRole("button", { name: "สวมนาฬิกา", exact: true }).last().click();
   await page.getByRole("button", { name: "สวมID card", exact: true }).last().click();
+  await page.getByRole("button", { name: "สวมปากกา", exact: true }).last().click();
+  await page.getByRole("button", { name: "สวมTablet", exact: true }).last().click();
+  await page.getByRole("button", { name: "สวมกระเป๋า", exact: true }).last().click();
+  await expect(page.locator(".items-panel")).toContainText("สวมอยู่ 6/6");
+  await expect(page.locator('[data-scene-equipment="tablet"]')).toHaveCount(1);
+  await expect(page.locator('[data-scene-equipment="pen"]')).toHaveCount(1);
+  await expect(page.locator('[data-scene-equipment="bag"]')).toHaveCount(0);
   await page.getByRole("button", { name: "อัตโนมัติ ปิด", exact: true }).click();
   await expect(page.locator(".accessory-layer")).toHaveAttribute("data-stage", "2");
 
@@ -72,8 +79,10 @@ test("all six equipped items use tuned anchors or smart suppression on every pos
     await page.getByRole("button", { name: `สวม${name}`, exact: true }).last().click();
   await expect(page.locator(".items-panel")).toContainText("สวมอยู่ 6/6");
   await expect(page.getByRole("button", { name: "ถอดกระเป๋า", exact: true })).toHaveCount(2);
-  await expect(page.locator(".character-panel .accessory-layer")).toHaveAttribute("data-suppressed-equipment", /bag/);
-  await expect(page.locator('.character-panel [data-equipment-overlay="bag"]')).toHaveCount(0);
+  await expect(page.locator(".character-panel .scene-equipment-layer")).toHaveAttribute("data-suppressed-scene-equipment", /bag/);
+  await expect(page.locator('.character-panel [data-scene-equipment="bag"]')).toHaveCount(0);
+  await expect(page.locator(".character-panel [data-equipment-overlay]")).toHaveCount(3);
+  await expect(page.locator('.character-panel [data-equipment-overlay="pen"], .character-panel [data-equipment-overlay="tablet"], .character-panel [data-equipment-overlay="bag"]')).toHaveCount(0);
 
   const stages = [
     "เสื้อยืดธรรมดา ปลดล็อกแล้ว", "ชุดสูท ใช้อยู่",
@@ -84,8 +93,8 @@ test("all six equipped items use tuned anchors or smart suppression on every pos
     await page.getByRole("button", { name: label, exact: true }).click();
     const layer = page.locator(".stage-detail .accessory-layer");
     await expect(layer).toHaveAttribute("data-stage", String(index + 1));
-    expect(await layer.locator("[data-equipment-overlay]").count()).toBeLessThanOrEqual(5);
-    await expect(layer).not.toHaveAttribute("data-suppressed-equipment", "");
+    expect(await layer.locator("[data-equipment-overlay]").count()).toBeLessThanOrEqual(3);
+    await expect(layer.locator('[data-equipment-overlay="glasses"]')).toHaveCount(1);
     await page.locator(".stage-detail-character").screenshot({ path: `test-results/accessories-stage-${index + 1}.png` });
     await page.getByRole("button", { name: "ปิด", exact: true }).click();
   }
