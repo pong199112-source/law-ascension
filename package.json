@@ -1,0 +1,42 @@
+{
+  "name": "law-ascension",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "cf-typegen": "wrangler types",
+    "check:assets": "node scripts/check-assets.mjs",
+    "test": "node --experimental-strip-types --test src/domain/progression.test.ts",
+    "test:e2e": "playwright test",
+    "format": "prettier --write src tests scripts *.ts *.js *.json *.jsonc"
+  },
+  "dependencies": {
+    "@fontsource/noto-sans-thai": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.54.9",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.0",
+    "vite": "^8.3.0",
+    "wrangler": "^4.131.2"
+  }
+}

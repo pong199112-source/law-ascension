@@ -26,3 +26,58 @@
 - Cloudflare D1 ใน Phase ถัดไป
 
 เริ่มจาก `CODEX_MASTER_PROMPT.md` และ `docs/PHASE-1-SPEC.md`
+
+## Phase 1 — Local prototype
+
+ใช้ Node.js 24+ และ npm ติดตั้งและเปิดด้วย:
+
+```sh
+npm install
+npm run cf-typegen
+npm run dev
+```
+
+เปิด http://127.0.0.1:5173 — React + TypeScript ผ่าน Vite และ Cloudflare Vite Plugin โดยจำลอง Workers ในเครื่อง ไม่มีการ deploy
+
+### ทดลอง UI
+
+- เริ่มต้น Lv.17 ชุดสูท, 650/1,000 XP, อ่านสะสม 86 ชม. 35 นาที และ streak จำลอง 7 วัน
+- “เริ่มอ่านวันนี้” เปิดตัวเลือกวิชาและจับเวลาจริง พัก/อ่านต่อได้ ปิดหน้าต่างแล้วเวลายังเดิน บันทึกเฉพาะนาทีเต็ม
+- “เพิ่มเวลาเอง” รับจำนวนเต็ม 1–720 นาที เลือกวิชาได้ อัปเดตเวลาสะสม, XP, Level, ภารกิจ และประวัติทันที
+- สูตรทดลอง: 1 นาที = 10 XP; 1,000 XP = 1 Level ทั้ง overall และรายวิชา ไม่มี quest bonus
+- ทดลองเพิ่มวิแพ่ง 240 นาที: overall เปลี่ยนจาก Lv.17 เป็น Lv.20 / 50 XP และเปลี่ยนภาพเป็นชุดกากีอัตโนมัติ
+- กดแต่ละขั้นวิวัฒนาการเพื่อดูรายละเอียดและเงื่อนไขปลดล็อก ภาพหลักเปลี่ยนตาม Level จริงเท่านั้น
+- ไอเทม 6 ชิ้นเป็น placeholder กดดูรายละเอียดได้ ยังไม่มีโบนัสหรือระบบสวมใส่
+- ทุกอย่างอยู่ใน React state; รีเฟรชแล้วกลับสู่ mock เริ่มต้น ไม่มีการบันทึกข้ามการเปิดหน้า
+- ชุดภารกิจและ streak เป็น mock สำหรับทดลองในหน้าเดียว ไม่ได้จำลองการข้ามวัน วันสอบแก้ได้ใน mock data และนับถอยหลังจากเวลาจริง
+
+### ไฟล์หลัก
+
+- `src/App.tsx` — หน้า Home และการเชื่อม interaction
+- `src/components/` — Progress และ native dialog ที่รองรับ keyboard/focus
+- `src/data/mock.ts` — player, วิชา, ภารกิจ และไอเทม
+- `src/domain/progression.ts` — อ่าน character stage จาก manifest และคำนวณ XP
+- `src/style.css` — desktop/tablet/mobile layouts, animation และ reduced motion
+- `public/assets/characters/manifest.json` — source of truth ของ 6 ระดับ
+- `worker/index.ts`, `wrangler.jsonc`, `vite.config.ts` — Workers / static asset / Vite configuration
+- `tests/home.spec.ts` — ตรวจ runtime, responsive, timer และ flow การเพิ่มเวลา
+
+### Validation
+
+```sh
+npm run check:assets
+npm run typecheck
+npm run lint
+npm test
+npm run build
+# เปิด npm run dev ในอีก terminal ก่อนรันทดสอบเบราว์เซอร์
+npm run test:e2e
+```
+
+Browser test ใช้ Google Chrome ที่ติดตั้งในเครื่อง ผ่าน Playwright แบบ headless และบันทึกภาพใน `docs/screenshots/` ตรวจขนาด 1440, 1024, 768, 390 และ 320px
+
+ตรวจ build ที่เสิร์ฟผ่าน local Workers ด้วย `npm run preview` (ปกติ port 4173) แล้วกำหนด `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173` ก่อนรัน `npm run test:e2e`
+
+Asset ZIP ที่เสียถูกแทนด้วยฉบับสมบูรณ์จากผู้ใช้และแตกไฟล์แล้ว ภาพตัวละครไม่ถูกแก้ไขหรือสร้างใหม่ Reference อยู่ใน `design-reference/` เพื่ออ้างอิงการออกแบบเท่านั้น ไม่ถูกเสิร์ฟเป็นหน้าเว็บ ฟอนต์ Noto Sans Thai และ Nunito เสิร์ฟจาก dependency ภายในโปรเจกต์
+
+**ขอบเขต:** จบที่ Phase 1 UI review เท่านั้น ยังไม่มี D1, Auth/Login, PIN, R2 หรือ production deploy
